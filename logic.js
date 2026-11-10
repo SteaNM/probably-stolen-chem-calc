@@ -39,6 +39,11 @@ function getCartelReputationHtml(requiredPurity, actualPurity, requiredVials, de
     return `<div class="rep-box" style="padding:6px;margin-top:6px"><div style="font-size:.8rem;color:#cbd8e6;font-weight:600">${t('cartel_rep_bonus')} <span style="color:${color}">${value}</span></div><div style="font-size:.7rem;color:#8b9eb0">${detail}</div></div>`;
 }
 
+function getCartelStipendHtml(reputation) {
+    const stipend = 150 + 4 * reputation;
+    return `<div class="rep-box" style="border-left-color:#f0b36a;background:#1c1f26;padding:6px;margin-top:4px"><div style="font-size:.8rem;color:#cbd8e6;font-weight:600">${t('cartel_stipend')} <span style="color:#f0b36a">${t('approx')}${stipend} ${t('currency')}</span></div><div style="font-size:.7rem;color:#8b9eb0">${t('cartel_stipend_base', {rep: reputation})}</div></div>`;
+}
+
 function normalizeNumberInput(input) {
     const fallback = input.id === 'purityInputValue' ? 100 : 0;
     const min = input.min === '' ? -Infinity : Number(input.min);
@@ -330,7 +335,9 @@ export function updateAll(event) {
             <div class="line" style="padding:0"><span>${t('ready_units')}</span><span class="amt" style="color:#f87171;font-size:1.1rem">0 ${t(r.unitKey)}</span></div>
         `;
         elements.revenueContainer.innerHTML = '';
-        if (hasCartel) elements.cartelResult.innerHTML = '';
+        if (hasCartel) {
+            elements.cartelResult.innerHTML = getCartelStipendHtml(numericValues.get('cartelRep') || 0);
+        }
         showInputCorrections(adjustedInputs);
         return;
     }
@@ -398,17 +405,17 @@ export function updateAll(event) {
         elements.fillerInfo.innerHTML = `📥 <b>${t('cartel_filler')}:</b> ${fmt(totalRawFiller)} ${t('label_ml')} → ${t('after_blender')}: <b style="color:#f0b36a">${fmt(usableFiller)} ${t('label_ml')}</b>`;
         
         const { vials: reqVials, purity: reqPurity } = getCartelRequirements(numericValues.get('cartelWeek'));
-        const reputation = numericValues.get('cartelRep');
+        const reputation = numericValues.get('cartelRep') || 0;
         const mode = elements.cartelMode.value;
         let targetPurity = reqPurity;
         if (mode === 'bonus') targetPurity += 10;
 
         if (id === 'dream_dust') {
             if (totalExtract <= 0) {
-                elements.cartelResult.innerHTML = `<div class="warn">${t('error_no_extract')}</div>${getCartelReputationHtml(reqPurity, 0, reqVials, 0)}`;
+                elements.cartelResult.innerHTML = `<div class="warn">${t('error_no_extract')}</div>${getCartelStipendHtml(reputation)}${getCartelReputationHtml(reqPurity, 0, reqVials, 0)}`;
             } else if (purePurity < targetPurity) {
                 const deliveredVials = estimateCartelDelivery(reqVials, targetPurity, purePurity, totalExtract, usableFiller, r.outputMl);
-                elements.cartelResult.innerHTML = `<div class="warn">⚠️ ${purePurity.toFixed(0)}% < ${targetPurity}%</div>${getCartelReputationHtml(reqPurity, purePurity, reqVials, deliveredVials)}`;
+                elements.cartelResult.innerHTML = `<div class="warn">⚠️ ${purePurity.toFixed(0)}% < ${targetPurity}%</div>${getCartelStipendHtml(reputation)}${getCartelReputationHtml(reqPurity, purePurity, reqVials, deliveredVials)}`;
             } else {
                 const totalMixNeeded = reqVials * r.outputMl;
                 const extractForCartelVal = (targetPurity / purePurity) * totalMixNeeded;
@@ -416,7 +423,7 @@ export function updateAll(event) {
                 
                 if (extractForCartelVal > totalExtract) {
                     const deliveredVials = estimateCartelDelivery(reqVials, targetPurity, purePurity, totalExtract, usableFiller, r.outputMl);
-                    elements.cartelResult.innerHTML = `<div class="warn" style="border-color:#f87171">${t('cartel_not_enough_extract')}</div>${getCartelReputationHtml(reqPurity, targetPurity, reqVials, deliveredVials)}`;
+                    elements.cartelResult.innerHTML = `<div class="warn" style="border-color:#f87171">${t('cartel_not_enough_extract')}</div>${getCartelStipendHtml(reputation)}${getCartelReputationHtml(reqPurity, targetPurity, reqVials, deliveredVials)}`;
                 } else {
                     let fillerStatus = usableFiller >= fillerNeeded
                         ? `<span style="color:#a0d6a0">${t('cartel_filler_status_ok', {amount: fmt(usableFiller - fillerNeeded)})}</span>`
@@ -437,7 +444,6 @@ export function updateAll(event) {
                         usableFiller,
                         r.outputMl
                     );
-                    const stipendWithPerk = 150 + 4 * reputation;
                     const mixPurity = targetPurity / (1 - FINISHER_IMP[Math.min(fm, 4)]);
                     
                     elements.cartelResult.innerHTML = `
@@ -456,10 +462,7 @@ export function updateAll(event) {
                             <div class="line" style="padding:0"><span>${t('cartel_final_purity')}</span><span class="amt" style="color:#a0d6a0">${targetPurity}%</span></div>
                             <div style="font-size:.75rem;margin-top:4px">${fillerStatus}</div>
                         </div>
-                        <div class="rep-box" style="border-left-color:#f0b36a;background:#1c1f26;padding:6px;margin-top:4px">
-                            <div style="font-size:.8rem;color:#cbd8e6;font-weight:600">${t('cartel_stipend')} <span style="color:#f0b36a">${t('approx')}${stipendWithPerk} ${t('currency')}</span></div>
-                            <div style="font-size:.7rem;color:#8b9eb0">${t('cartel_stipend_base', {rep: reputation})}</div>
-                        </div>
+                        ${getCartelStipendHtml(reputation)}
                         ${getCartelReputationHtml(reqPurity, targetPurity, reqVials, deliveredVials)}
                         <div style="font-size:.75rem;color:#8b9eb0;margin-top:8px;background:#1a232e;padding:6px;border-radius:6px">
                             ${t('cartel_paste_usage_text', {cartel: fmt(rawMushForCartel), sell: fmt(rawMushRemaining)})}
@@ -469,10 +472,10 @@ export function updateAll(event) {
             }
         } else if (id === 'nomore_injector') {
             if (dreamExtractTotal <= 0) {
-                elements.cartelResult.innerHTML = `<div class="warn">${t('error_no_extract')}</div>${getCartelReputationHtml(reqPurity, 0, reqVials, 0)}`;
+                elements.cartelResult.innerHTML = `<div class="warn">${t('error_no_extract')}</div>${getCartelStipendHtml(reputation)}${getCartelReputationHtml(reqPurity, 0, reqVials, 0)}`;
             } else if (extractForCartel > dreamExtractTotal) {
                 const deliveredVials = estimateCartelDelivery(reqVials, targetPurity, extractPurity, dreamExtractTotal, usableFiller, 2);
-                elements.cartelResult.innerHTML = `<div class="warn" style="border-color:#f87171">${t('cartel_not_enough_extract')}</div>${getCartelReputationHtml(reqPurity, Math.min(targetPurity, extractPurity), reqVials, deliveredVials)}`;
+                elements.cartelResult.innerHTML = `<div class="warn" style="border-color:#f87171">${t('cartel_not_enough_extract')}</div>${getCartelStipendHtml(reputation)}${getCartelReputationHtml(reqPurity, Math.min(targetPurity, extractPurity), reqVials, deliveredVials)}`;
             } else {
                 const mixNeededForCartel = reqVials * 2;
                 const fillerNeeded = mixNeededForCartel - extractForCartel;
@@ -493,7 +496,6 @@ export function updateAll(event) {
                     usableFiller,
                     2
                 );
-                const stipendWithPerk = 150 + 4 * reputation;
                 const mixPurity = targetPurity / (1 - FINISHER_IMP[Math.min(fm, 4)]);
                 
                 elements.cartelResult.innerHTML = `
@@ -512,10 +514,7 @@ export function updateAll(event) {
                         <div class="line" style="padding:0"><span>${t('cartel_final_purity')}</span><span class="amt" style="color:#a0d6a0">${targetPurity}%</span></div>
                         <div style="font-size:.75rem;margin-top:4px">${fillerStatus}</div>
                     </div>
-                    <div class="rep-box" style="border-left-color:#f0b36a;background:#1c1f26;padding:6px;margin-top:4px">
-                        <div style="font-size:.8rem;color:#cbd8e6;font-weight:600">${t('cartel_stipend')} <span style="color:#f0b36a">${t('approx')}${stipendWithPerk} ${t('currency')}</span></div>
-                        <div style="font-size:.7rem;color:#8b9eb0">${t('cartel_stipend_base', {rep: reputation})}</div>
-                    </div>
+                    ${getCartelStipendHtml(reputation)}
                     ${getCartelReputationHtml(reqPurity, targetPurity, reqVials, deliveredVials)}
                 `;
             }
