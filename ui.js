@@ -28,7 +28,7 @@ export const elements = {
     langSwitch: document.getElementById('langSwitch')
 };
 
-export function renderMods(r, updateCallback) {
+export function renderMods(r) {
     elements.modgrid.innerHTML = '';
     const devs = [
         { k: 'blender', l: t('module_blender'), h: '−35%→0%' },
@@ -40,11 +40,10 @@ export function renderMods(r, updateCallback) {
         const c = document.createElement('div'); c.className = 'modcard';
         c.innerHTML = `<h4>${d.l}</h4><input type="number" min="0" max="4" step="1" value="0" id="mod_${d.k}"><div class="hint">${d.h}</div>`;
         elements.modgrid.appendChild(c);
-        c.querySelector('input').addEventListener('input', updateCallback);
     });
 }
 
-export function renderScannerInputs(r, updateCallback) {
+export function renderScannerInputs(r) {
     elements.scannerInputs.innerHTML = '';
     let inputs = [];
     const id = elements.recipeSel.value;
@@ -59,7 +58,6 @@ export function renderScannerInputs(r, updateCallback) {
         card.className = 'scanner-card';
         card.innerHTML = `<h4>${inp.label}</h4><input type="number" min="0" step="0.1" value="0" id="scan_${inp.key}">`;
         elements.scannerInputs.appendChild(card);
-        card.querySelector('input').addEventListener('input', updateCallback);
     });
 }
 
@@ -69,7 +67,7 @@ export function renderStepsLayout(id) {
         <div class="line" style="margin-top:6px;border-top:1px solid #25323e;padding-top:6px">
             <span>${t('purity_after_evap')}</span>
             <span class="amt">
-                <input type="number" id="purityInputValue" class="purity-input" value="100" min="1" max="100" oninput="window.updateAll()">
+                <input type="number" id="purityInputValue" class="purity-input" value="100" min="1" max="100" step="any">
                 <span style="color:#7bc8f2;font-weight:700">%</span>
             </span>
         </div>

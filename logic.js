@@ -2,9 +2,59 @@ import { t, fmt, getMeasurementHtml, getGrade, calcReputation } from './utils.js
 import { RECIPES, DIFF_SETTINGS, BLENDER_LOSS, FINISHER_IMP } from './constants.js';
 import { elements, updateText } from './ui.js';
 
-export function updateAll() {
+function normalizeNumberInput(input) {
+    const fallback = input.id === 'purityInputValue' ? 100 : 0;
+    const min = input.min === '' ? -Infinity : Number(input.min);
+    const max = input.max === '' ? Number.MAX_SAFE_INTEGER : Number(input.max);
+    const step = input.step === '' ? 1 : Number(input.step);
+    let value = input.value === '' ? fallback : Number(input.value);
+
+    if (!Number.isFinite(value)) value = fallback;
+    value = Math.max(min, Math.min(max, value));
+
+    if (Number.isFinite(step) && step > 0) {
+        const stepBase = Number.isFinite(min) ? min : 0;
+        const steppedValue = stepBase + Math.round((value - stepBase) / step) * step;
+        value = Number.isFinite(steppedValue) ? steppedValue : max;
+        value = Math.max(min, Math.min(max, value));
+    }
+
+    value = Number(value.toFixed(10));
+    const originalValue = input.value === '' ? NaN : Number(input.value);
+    return { value, changed: !Number.isFinite(originalValue) || value !== originalValue };
+}
+
+function getInputLabel(input) {
+    return input.labels?.[0]?.textContent.trim()
+        || input.closest('.scanner-card, .modcard, .cost-input, .field')
+            ?.querySelector('label, h4')?.textContent.trim()
+        || input.id;
+}
+
+function showInputCorrections(adjustedInputs) {
+    if (adjustedInputs.length === 0) return;
+
+    const notice = document.createElement('div');
+    notice.className = 'warn';
+    notice.textContent = t('warn_invalid_input', { fields: adjustedInputs.join(', ') });
+    elements.warnEl.appendChild(notice);
+}
+
+export function updateAll(event) {
     elements.warnEl.innerHTML = '';
     elements.errEl.textContent = '';
+
+    const numericValues = new Map();
+    const adjustedInputs = [];
+    document.querySelectorAll('.calc input[type="number"]').forEach(input => {
+        const { value, changed } = normalizeNumberInput(input);
+        numericValues.set(input.id, value);
+
+        if (changed) {
+            adjustedInputs.push(getInputLabel(input));
+            if (event?.type === 'change') input.value = String(value);
+        }
+    });
 
     const id = elements.recipeSel.value;
     const r = RECIPES[id];
@@ -22,29 +72,27 @@ export function updateAll() {
 
     const inputs = {};
     ['mush', 'protein', 'fat', 'methylol', 'stab', 'reducing'].forEach(key => {
-        const el = document.getElementById('scan_' + key);
-        if (el) inputs[key] = parseFloat(el.value) || 0;
+        const inputId = 'scan_' + key;
+        if (numericValues.has(inputId)) inputs[key] = numericValues.get(inputId);
     });
 
-    const fm = parseInt(document.getElementById('mod_packer')?.value) || 0;
-    const hm = parseInt(document.getElementById('mod_heater')?.value) || 0;
-    const bm = parseInt(document.getElementById('mod_blender')?.value) || 0;
+    const fm = numericValues.get('mod_packer') || 0;
+    const hm = numericValues.get('mod_heater') || 0;
+    const bm = numericValues.get('mod_blender') || 0;
     
     const alcPct = parseFloat(elements.alcoholType.value) || 0.7;
     const diffKey = elements.difficulty.value;
     const diffConfig = DIFF_SETTINGS[diffKey];
 
     const purityInput = document.getElementById('purityInputValue');
-    let basePurity = purityInput ? parseFloat(purityInput.value) : 100;
-    if (isNaN(basePurity) || basePurity <= 0) basePurity = 100;
-    if (basePurity > 100) basePurity = 100;
+    const basePurity = purityInput ? numericValues.get('purityInputValue') : 100;
 
     let purePurity = basePurity * (1 - FINISHER_IMP[Math.min(fm, 4)]);
     const g = getGrade(purePurity);
     
-    const rawMushCost = id === 'phanta_pill' ? 0 : (parseFloat(elements.totalMushCost.value) || 0);
-    const chemCountUsed = parseInt(elements.useChemCount.value) || 0;
-    const restrictedCountUsed = parseInt(elements.useRestrictedCount.value) || 0;
+    const rawMushCost = id === 'phanta_pill' ? 0 : numericValues.get('totalMushCost');
+    const chemCountUsed = numericValues.get('useChemCount');
+    const restrictedCountUsed = numericValues.get('useRestrictedCount');
 
     let totalExtract = 0;
     let lossPct = BLENDER_LOSS[Math.min(bm, 4)];
@@ -128,6 +176,7 @@ export function updateAll() {
         `;
         elements.revenueContainer.innerHTML = '';
         if (hasCartel) elements.cartelResult.innerHTML = '';
+        showInputCorrections(adjustedInputs);
         return;
     }
 
@@ -214,8 +263,8 @@ export function updateAll() {
     elements.revenueContainer.innerHTML = revenueHTML;
 
     if (hasCartel) {
-        const starch = parseFloat(elements.scanStarch.value) || 0;
-        const sugar = parseFloat(elements.scanSugar.value) || 0;
+        const starch = numericValues.get('scan_starch');
+        const sugar = numericValues.get('scan_sugar');
         const totalRawFiller = starch + sugar;
         const usableFiller = totalRawFiller * (1 - lossPct);
         elements.fillerInfo.innerHTML = `📥 <b>${t('cartel_filler')}:</b> ${fmt(totalRawFiller)} ${t('label_ml')} → ${t('after_blender')}: <b style="color:#f0b36a">${fmt(usableFiller)} ${t('label_ml')}</b>`;
@@ -224,7 +273,7 @@ export function updateAll() {
         const reqVials = parseInt(reqStr[0]);
         const reqPurity = parseFloat(reqStr[1]);
         const mode = elements.cartelMode.value;
-        const reputation = parseInt(elements.cartelRep.value) || 0;
+        const reputation = numericValues.get('cartelRep');
         let targetPurity = reqPurity;
         if (mode === 'bonus') targetPurity += 10;
 
@@ -337,5 +386,8 @@ export function updateAll() {
                 `;
             }
         }
+
     }
+
+    showInputCorrections(adjustedInputs);
 }
