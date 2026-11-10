@@ -171,9 +171,31 @@ select:focus, input:focus {
    6. СКАНЕР И ЗАТРАТЫ
    ========================================================================== */
 .scanner-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.scanner-grid.portion-list { display: block; }
 .scanner-card { background: #0d1319; border: 1px solid #25323e; border-radius: 8px; padding: 8px; }
 .scanner-card h4 { margin: 0 0 4px; font-size: .75rem; color: #cbd8e6; }
 .scanner-card input { padding: 4px 6px; font-size: .9rem; }
+.portion-row { background: linear-gradient(145deg, #121c25, #0d1319 72%); border: 1px solid #2a3c4b; border-radius: 10px; padding: 10px; margin-bottom: 9px; box-shadow: inset 0 1px rgba(255, 255, 255, .025); }
+.portion-row-header { display: flex; justify-content: space-between; align-items: center; margin: -1px 0 10px; color: #d7e5f2; font-size: .8rem; }
+.portion-row-header strong { display: flex; align-items: center; gap: 7px; }
+.portion-row-header strong::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #55b8a5; box-shadow: 0 0 9px rgba(85, 184, 165, .45); }
+.portion-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.portion-field, .portion-count { display: block; min-width: 0; margin: 0; color: #91a8ba; font-size: .66rem; font-weight: 600; text-transform: none; letter-spacing: 0; }
+.portion-field-label { display: flex; align-items: flex-end; min-height: 2.5em; margin-bottom: 5px; line-height: 1.25; }
+.portion-input-wrap { display: flex; align-items: center; min-width: 0; height: 36px; border: 1px solid #2d414f; border-radius: 7px; background: #17232d; color: #70899b; }
+.portion-input-wrap:focus-within { border-color: #55b8a5; box-shadow: 0 0 0 2px rgba(85, 184, 165, .16); }
+.portion-input-wrap input { width: 100%; min-width: 0; height: 100%; padding: 5px 8px; background: transparent; border: 0; border-radius: inherit; box-shadow: none; color: #edf6fa; font-size: .9rem; font-variant-numeric: tabular-nums; }
+.portion-input-wrap input:focus { border: 0; box-shadow: none; }
+.portion-input-wrap > span { flex: 0 0 auto; padding: 0 9px 0 4px; font-size: .72rem; color: #8098a9; }
+.portion-count { display: block; width: min(100%, 180px); margin-top: 9px; }
+.portion-count .portion-field-label { min-height: 0; }
+.portion-add, .portion-remove { background: #172630; border: 1px solid #355361; border-radius: 7px; color: #dcecf2; cursor: pointer; transition: background .15s, border-color .15s, transform .15s; }
+.portion-add { width: 100%; padding: 8px 10px; font-size: .8rem; font-weight: 650; }
+.portion-add:hover, .portion-remove:not(:disabled):hover { background: #203b42; border-color: #55b8a5; }
+.portion-add:active, .portion-remove:not(:disabled):active { transform: translateY(1px); }
+.portion-remove { width: 28px; height: 28px; padding: 0; font-size: 1.1rem; line-height: 1; }
+.portion-remove:disabled { opacity: .4; cursor: default; }
+.portion-totals { margin-top: 10px; padding: 8px 9px; background: #111b23; border: 1px solid #233541; border-radius: 7px; color: #b4c8d7; font-size: .75rem; line-height: 1.5; }
 
 .cost-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .cost-input { background: #0d1319; border: 1px solid #25323e; border-radius: 8px; padding: 8px; }

@@ -1,6 +1,43 @@
 import { t, fmt, getMeasurementHtml, getGrade, calcReputation } from './utils.js';
 import { RECIPES, DIFF_SETTINGS, BLENDER_LOSS, FINISHER_IMP } from './constants.js';
-import { elements, updateText } from './ui.js';
+import { elements, getPortionRows, updateText } from './ui.js';
+
+function getCartelRequirements(weekValue) {
+    const week = Math.max(1, Math.floor(weekValue || 1));
+    return {
+        vials: 10 + (week - 1) * 5,
+        purity: Math.min(70, 40 + (week - 1) * 5)
+    };
+}
+
+function estimateCartelDelivery(requiredVials, targetPurity, extractPurity, extractAvailable, fillerAvailable, vialVolume) {
+    if (extractPurity <= 0) return 0;
+
+    const achievablePurity = Math.min(targetPurity, extractPurity);
+    const extractPerVial = achievablePurity / extractPurity * vialVolume;
+    const fillerPerVial = vialVolume - extractPerVial;
+    const byExtract = Math.floor((extractAvailable + 1e-9) / extractPerVial);
+    const byFiller = fillerPerVial > 1e-9
+        ? Math.floor((fillerAvailable + 1e-9) / fillerPerVial)
+        : requiredVials;
+    return Math.max(0, Math.min(requiredVials, byExtract, byFiller));
+}
+
+function getCartelReputationHtml(requiredPurity, actualPurity, requiredVials, deliveredVials) {
+    const result = calcReputation(requiredPurity, actualPurity, requiredVials, deliveredVials);
+    const color = result.gameOver
+        ? '#f87171'
+        : result.total > 10 ? '#7bc8f2' : '#a0d6a0';
+    const value = result.gameOver
+        ? t('cartel_game_over')
+        : `${result.total >= 0 ? '+' : ''}${result.total} ${t('rep_points')}`;
+    const detail = t('cartel_rep_breakdown', {
+        count: result.count,
+        purity: result.purity
+    });
+
+    return `<div class="rep-box" style="padding:6px;margin-top:6px"><div style="font-size:.8rem;color:#cbd8e6;font-weight:600">${t('cartel_rep_bonus')} <span style="color:${color}">${value}</span></div><div style="font-size:.7rem;color:#8b9eb0">${detail}</div></div>`;
+}
 
 function normalizeNumberInput(input) {
     const fallback = input.id === 'purityInputValue' ? 100 : 0;
@@ -40,6 +77,55 @@ function showInputCorrections(adjustedInputs) {
     elements.warnEl.appendChild(notice);
 }
 
+function getPortionData(index, numericValues) {
+    const values = {};
+    ['mush', 'protein', 'fat', 'reducing', 'caffeine'].forEach(key => {
+        values[key] = numericValues.get(`portion_${index}_${key}`) || 0;
+    });
+    return {
+        values,
+        count: numericValues.get(`portion_${index}_count`) || 1
+    };
+}
+
+function updatePortionedText(id, rows, amountForBatch, { wholeMlOnly = false } = {}) {
+    const rowAmounts = rows.map((row, index) => {
+        const amount = amountForBatch(row, index);
+        const measuredAmount = wholeMlOnly ? Math.ceil(amount - 1e-9) : amount;
+        return { count: row.count, amount, measuredAmount };
+    });
+    const total = rowAmounts.reduce((sum, row) => sum + row.amount * row.count, 0);
+    const rowHtml = rowAmounts.map((row, index) => {
+        const perBatch = row.measuredAmount;
+        const amountText = wholeMlOnly ? String(perBatch) : fmt(perBatch);
+        const measurement = wholeMlOnly
+            ? getMeasurementHtml(perBatch, { wholeMlOnly: true })
+            : getMeasurementHtml(perBatch);
+        const label = wholeMlOnly
+            ? t('alcohol_portion_line', {
+                number: index + 1,
+                amount: amountText,
+                count: row.count
+            })
+            : t('portion_instruction_line', {
+            number: index + 1,
+            count: row.count,
+            amount: fmt(perBatch),
+            total: fmt(row.amount * row.count)
+        });
+        return `<span>${label}${measurement}</span>`;
+    });
+
+    const summary = wholeMlOnly
+        ? [
+            `<span>${t('alcohol_all_at_once')}: ${Math.ceil(total - 1e-9)} ${t('label_ml')}${getMeasurementHtml(total, { wholeMlOnly: true })}</span>`,
+            `<span>${t('alcohol_reused')}: ${Math.ceil(Math.max(0, ...rowAmounts.map(row => row.amount)) - 1e-9)} ${t('label_ml')}${getMeasurementHtml(Math.max(0, ...rowAmounts.map(row => row.amount)), { wholeMlOnly: true })}</span>`
+        ]
+        : [`<span>${t('instruction_total')}: ${fmt(total)} ${t('label_ml')}${getMeasurementHtml(total)}</span>`];
+
+    updateText(id, [...rowHtml, ...summary].join(''));
+}
+
 export function updateAll(event) {
     elements.warnEl.innerHTML = '';
     elements.errEl.textContent = '';
@@ -58,6 +144,8 @@ export function updateAll(event) {
 
     const id = elements.recipeSel.value;
     const r = RECIPES[id];
+    const usesAlcohol = ['dream_dust', 'nightmare_dust', 'caffeine_pill', 'nomore_injector'].includes(id);
+    elements.portionTotals.style.display = usesAlcohol ? 'block' : 'none';
     
     const hasCartel = (id === 'dream_dust' || id === 'nomore_injector');
     if (hasCartel) {
@@ -70,11 +158,36 @@ export function updateAll(event) {
     
     elements.mushCostWrapper.style.display = (id === 'phanta_pill') ? 'none' : 'block';
 
+    const batchRows = usesAlcohol
+        ? getPortionRows().map((row, index) => getPortionData(index, numericValues))
+        : [];
     const inputs = {};
-    ['mush', 'protein', 'fat', 'methylol', 'stab', 'reducing'].forEach(key => {
-        const inputId = 'scan_' + key;
-        if (numericValues.has(inputId)) inputs[key] = numericValues.get(inputId);
-    });
+    if (usesAlcohol) {
+        ['mush', 'protein', 'fat', 'reducing', 'caffeine'].forEach(key => {
+            inputs[key] = batchRows.reduce(
+                (sum, row) => sum + row.values[key] * row.count,
+                0
+            );
+        });
+    } else {
+        ['methylol', 'stab'].forEach(key => {
+            const value = numericValues.get(`scan_${key}`);
+            if (value !== undefined) inputs[key] = value;
+        });
+    }
+
+    const portionFields = [
+        { key: 'mush', label: id === 'nightmare_dust' ? t('input_mush_nightmare') : id === 'caffeine_pill' ? t('input_mush_coffee') : t('input_mush') },
+        { key: 'protein', label: id === 'caffeine_pill' ? t('input_protein_coffee') : t('input_protein') },
+        ...(id === 'caffeine_pill' ? [{ key: 'fat', label: t('input_fat') }] : []),
+        ...(id === 'caffeine_pill' ? [{ key: 'caffeine', label: t('input_caffeine_in_beans') }] : []),
+        ...(id === 'nomore_injector' ? [{ key: 'reducing', label: t('input_reducing') }] : [])
+    ];
+    if (usesAlcohol) {
+        elements.portionTotals.textContent = `${t('portion_total_label')} ${portionFields
+            .map(field => `${field.label}: ${fmt(inputs[field.key])} ${t('label_ml')}`)
+            .join(' · ')}`;
+    }
 
     const fm = numericValues.get('mod_packer') || 0;
     const hm = numericValues.get('mod_heater') || 0;
@@ -86,8 +199,10 @@ export function updateAll(event) {
 
     const purityInput = document.getElementById('purityInputValue');
     const basePurity = purityInput ? numericValues.get('purityInputValue') : 100;
+    const totalPaste = inputs.mush || 0;
 
-    let purePurity = basePurity * (1 - FINISHER_IMP[Math.min(fm, 4)]);
+    const extractPurity = basePurity * (1 - FINISHER_IMP[Math.min(fm, 4)]);
+    const purePurity = id === 'nomore_injector' ? extractPurity * 0.6 : extractPurity;
     const g = getGrade(purePurity);
     
     const rawMushCost = id === 'phanta_pill' ? 0 : numericValues.get('totalMushCost');
@@ -101,6 +216,7 @@ export function updateAll(event) {
     let dreamExtractTotal = 0;
     let extractForCartel = 0;
     let extractForNomore = 0;
+    let effectiveExtract = 0;
 
     // --- ОБНОВЛЕНИЕ КОНВЕЙЕРА С ДИНАМИЧЕСКИМ СБРОСОМ ---
     if (id === 'dream_dust' || id === 'nightmare_dust' || id === 'caffeine_pill') {
@@ -111,8 +227,12 @@ export function updateAll(event) {
         } else {
             const lostAmount = rawPaste * lossPct;
             const usablePaste = rawPaste - lostAmount;
-            totalExtract = usablePaste * r.extractYield;
-            elements.pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_paste')} <b>${fmt(rawPaste)} ${t('pipe_ml')}</b><br>${t('pipe_blender_lost')} (${bm} ${t('pipe_mod')}) ${t('pipe_loses')} ${(lossPct * 100)}%: <b style="color:#f87171">−${fmt(lostAmount)} ${t('pipe_ml')}</b><br>${t('pipe_left')} <b>${fmt(usablePaste)} ${t('pipe_ml')}</b><br>${t('pipe_extract')} (${r.extractYield * 100}%): <b style="color:#a0d6a0">${fmt(totalExtract)} ${t('pipe_ml')}</b>`;
+            totalExtract = usablePaste * r.extractYield + (id === 'caffeine_pill' ? inputs.caffeine : 0);
+            const extractLabel = id === 'caffeine_pill' ? t('pipe_coffee_extract') : `${t('pipe_extract')} (${r.extractYield * 100}%)`;
+            const caffeineLine = id === 'caffeine_pill'
+                ? `<br>${t('pipe_caffeine_from_beans')} <b>${fmt(inputs.caffeine)} ${t('pipe_ml')}</b>`
+                : '';
+            elements.pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_paste')} <b>${fmt(rawPaste)} ${t('pipe_ml')}</b><br>${t('pipe_blender_lost')} (${bm} ${t('pipe_mod')}) ${t('pipe_loses')} ${(lossPct * 100)}%: <b style="color:#f87171">−${fmt(lostAmount)} ${t('pipe_ml')}</b><br>${t('pipe_left')} <b>${fmt(usablePaste)} ${t('pipe_ml')}</b>${caffeineLine}<br>${extractLabel} <b style="color:#a0d6a0">${fmt(totalExtract)} ${t('pipe_ml')}</b>`;
         }
     } else if (id === 'nomore_injector') {
         const rawPaste = inputs.mush;
@@ -124,14 +244,12 @@ export function updateAll(event) {
             const usablePaste = rawPaste - lostAmount;
             dreamExtractTotal = usablePaste * 0.5;
             
-            const reqStr = elements.cartelWeek.value.split(',');
-            const reqVials = parseInt(reqStr[0]);
-            const reqPurity = parseFloat(reqStr[1]);
+            const { vials: reqVials, purity: reqPurity } = getCartelRequirements(numericValues.get('cartelWeek'));
             const mode = elements.cartelMode.value;
             let targetPurity = reqPurity;
             if (mode === 'bonus') targetPurity += 10;
             
-            extractForCartel = (targetPurity / purePurity) * (reqVials * 2);
+            extractForCartel = (targetPurity / extractPurity) * (reqVials * 2);
             extractForNomore = Math.max(0, dreamExtractTotal - extractForCartel);
             
             const reducing = inputs.reducing;
@@ -139,10 +257,9 @@ export function updateAll(event) {
                 errorMsg = t('error_no_reducing');
                 elements.pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_paste')} <b>${fmt(rawPaste)} ${t('pipe_ml')}</b><br>${t('pipe_dream_extract')} <b style="color:#7bc8f2">${fmt(dreamExtractTotal)} ${t('pipe_ml')}</b><br>${t('pipe_left_nomore')} <b style="color:#a0d6a0">${fmt(extractForNomore)} ${t('pipe_ml')}</b>`;
             } else {
-                let effectiveExtract = Math.min(extractForNomore, reducing);
+                effectiveExtract = Math.min(extractForNomore, reducing);
                 if (reducing < extractForNomore) {
                     elements.warnEl.innerHTML = `<div class="warn">${t('warn_lack_reducing')} ${fmt(extractForNomore)} ${t('warn_lack_reducing_2')} ${fmt(extractForNomore)} ${t('warn_lack_reducing_3')} ${fmt(reducing)} ${t('warn_lack_reducing_4')}</div>`;
-                    effectiveExtract = reducing;
                 } else {
                     elements.warnEl.innerHTML = '';
                 }
@@ -166,6 +283,44 @@ export function updateAll(event) {
         }
     }
 
+    if (usesAlcohol) {
+        const alcoholRatio = id === 'nomore_injector' ? 5 : r.alcoholRatio;
+
+        updatePortionedText('amt-alc', batchRows, (row) =>
+            row.values.mush * (1 - lossPct) * alcoholRatio / alcPct,
+        { wholeMlOnly: true });
+        updatePortionedText('amt-prot', batchRows, (row) => row.values.protein);
+
+        if (id === 'caffeine_pill') {
+            updatePortionedText('amt-fat', batchRows, (row) => row.values.fat * 0.125);
+        } else if (id === 'nomore_injector') {
+            const rawNomoreTotal = batchRows.reduce(
+                (sum, row) => sum + row.values.mush * (1 - lossPct) * 0.5 * row.count,
+                0
+            );
+            const remainingRatio = rawNomoreTotal > 0
+                ? Math.max(0, extractForNomore) / rawNomoreTotal
+                : 0;
+            const extractPerBatch = (row) =>
+                row.values.mush * (1 - lossPct) * 0.5 * remainingRatio;
+            const actualPerBatch = (row) => {
+                const batchAllocation = extractPerBatch(row);
+                const reductionRatio = extractForNomore > 0
+                    ? Math.min(1, effectiveExtract / extractForNomore)
+                    : 0;
+                return batchAllocation * reductionRatio;
+            };
+            updatePortionedText('amt-ext', batchRows, actualPerBatch);
+            updatePortionedText('amt-red', batchRows, actualPerBatch);
+            updatePortionedText('amt-agent', batchRows, (row) => actualPerBatch(row) * 0.333);
+        }
+    } else if (id === 'phanta_pill') {
+        const stabilizer = inputs.stab || 0;
+        const methylolReduction = (inputs.methylol || 0) * 0.75;
+        updateText('amt-stab', `${fmt(stabilizer)} ${t('label_ml')}` + getMeasurementHtml(stabilizer));
+        updateText('amt-red', `${fmt(methylolReduction)} ${t('label_ml')}` + getMeasurementHtml(methylolReduction));
+    }
+
     // Если ошибка (например, пустые поля), очищаем результаты и выходим
     if (errorMsg) {
         elements.errEl.textContent = errorMsg;
@@ -180,35 +335,6 @@ export function updateAll(event) {
         return;
     }
 
-    if (id === 'dream_dust' || id === 'nightmare_dust') {
-        const usablePaste = inputs.mush * (1 - lossPct);
-        const pureAlcNeeded = usablePaste * r.alcoholRatio;
-        const bottleAlcNeeded = pureAlcNeeded / alcPct;
-        updateText('amt-alc', `${fmt(bottleAlcNeeded)} ${t('label_ml')}`);
-        updateText('amt-prot', `${fmt(inputs.protein)} ${t('label_ml')}` + getMeasurementHtml(inputs.protein));
-    } else if (id === 'caffeine_pill') {
-        const usablePaste = inputs.mush * (1 - lossPct);
-        const pureAlcNeeded = usablePaste * r.alcoholRatio;
-        const bottleAlcNeeded = pureAlcNeeded / alcPct;
-        updateText('amt-fat', `${fmt(inputs.fat * 0.125)} ${t('label_ml')}` + getMeasurementHtml(inputs.fat * 0.125));
-        updateText('amt-alc', `${fmt(bottleAlcNeeded)} ${t('label_ml')}`);
-        updateText('amt-prot', `${fmt(inputs.protein)} ${t('label_ml')}` + getMeasurementHtml(inputs.protein));
-    } else if (id === 'phanta_pill') {
-        updateText('amt-stab', `${fmt(inputs.stab)} ${t('label_ml')}` + getMeasurementHtml(inputs.stab));
-        updateText('amt-red', `${fmt(inputs.methylol * 0.75)} ${t('label_ml')}` + getMeasurementHtml(inputs.methylol * 0.75));
-    } else if (id === 'nomore_injector') {
-        const usablePaste = inputs.mush * (1 - lossPct);
-        const pureExtract = usablePaste * 0.5;
-        const pureAlcNeeded = usablePaste * 5;
-        const bottleAlcNeeded = pureAlcNeeded / alcPct;
-        const effectiveExtract = Math.min(Math.max(0, pureExtract - extractForCartel), inputs.reducing);
-        updateText('amt-alc', `${fmt(bottleAlcNeeded)} ${t('label_ml')}`);
-        updateText('amt-prot', `${fmt(inputs.protein)} ${t('label_ml')}` + getMeasurementHtml(inputs.protein));
-        updateText('amt-ext', `${fmt(effectiveExtract)} ${t('label_ml')}`);
-        updateText('amt-red', `${fmt(effectiveExtract)} ${t('label_ml')}` + getMeasurementHtml(effectiveExtract));
-        updateText('amt-agent', `${fmt(effectiveExtract * 0.333)} ${t('label_ml')}` + getMeasurementHtml(effectiveExtract * 0.333));
-    }
-    
     updateText('purityGradeText', `<span style="color:${g.c}">${purePurity.toFixed(1)}% — ${g.n}</span>`);
     
     const totalItems = Math.floor(totalExtract / r.outputMl);
@@ -229,11 +355,13 @@ export function updateAll(event) {
     if (r.baseValue && totalItems > 0) {
         const base = r.baseValue;
         const qualityBonus = base * g.m;
+        const qualityPercentText = `${g.m >= 0 ? '+' : ''}${(g.m * 100).toFixed(0)}%`;
+        const qualityBonusText = `${qualityBonus >= 0 ? '+' : '−'}${Math.abs(qualityBonus).toFixed(1)}`;
         const afterQuality = base + qualityBonus;
         const contrabandBonus = afterQuality * r.contrabandMarkup;
-        const afterContraband = afterQuality + contrabandBonus;
-        const diffBonus = afterContraband * (diffConfig.markup - 1);
-        const finalPrice = afterContraband * diffConfig.markup;
+        const marketMarkup = diffConfig.markup - 1;
+        const diffBonus = afterQuality * marketMarkup;
+        const finalPrice = afterQuality * (1 + r.contrabandMarkup + marketMarkup);
         const pricePerItem = Math.round(finalPrice);
         const totalRevenue = pricePerItem * totalItems;
         const netProfit = totalRevenue - totalCost;
@@ -242,7 +370,7 @@ export function updateAll(event) {
             <div class="sale-box">
                 <div style="font-size:.85rem;color:#cbd8e6;font-weight:600;margin-bottom:6px">${t('price_per_item')}</div>
                 <div class="sale-line"><span>${t('base_price')}</span><span>${base} ${t('currency')}</span></div>
-                <div class="sale-line"><span>${t('quality_bonus')} (+${(g.m * 100).toFixed(0)}%)</span><span style="color:#7bc8f2">+${qualityBonus.toFixed(1)} ${t('currency')}</span></div>
+                <div class="sale-line"><span>${t('quality_bonus')} (${qualityPercentText})</span><span style="color:${qualityBonus >= 0 ? '#7bc8f2' : '#f87171'}">${qualityBonusText} ${t('currency')}</span></div>
                 ${r.contrabandMarkup > 0 ? `<div class="sale-line"><span>${t('contraband_bonus')} (+${(r.contrabandMarkup * 100).toFixed(0)}%)</span><span style="color:#f0b36a">+${contrabandBonus.toFixed(1)} ${t('currency')}</span></div>` : ''}
                 ${diffConfig.markup > 1 ? `<div class="sale-line"><span>${t('difficulty_bonus')} (${t('times')}${diffConfig.markup})</span><span style="color:#a0d6a0">+${diffBonus.toFixed(1)} ${t('currency')}</span></div>` : ''}
                 <div class="sale-total"><span>${t('total_price')}</span><span>${t('approx')}${pricePerItem} ${t('currency')}</span></div>
@@ -269,26 +397,25 @@ export function updateAll(event) {
         const usableFiller = totalRawFiller * (1 - lossPct);
         elements.fillerInfo.innerHTML = `📥 <b>${t('cartel_filler')}:</b> ${fmt(totalRawFiller)} ${t('label_ml')} → ${t('after_blender')}: <b style="color:#f0b36a">${fmt(usableFiller)} ${t('label_ml')}</b>`;
         
-        const reqStr = elements.cartelWeek.value.split(',');
-        const reqVials = parseInt(reqStr[0]);
-        const reqPurity = parseFloat(reqStr[1]);
+        const { vials: reqVials, purity: reqPurity } = getCartelRequirements(numericValues.get('cartelWeek'));
         const mode = elements.cartelMode.value;
-        const reputation = numericValues.get('cartelRep');
         let targetPurity = reqPurity;
         if (mode === 'bonus') targetPurity += 10;
 
         if (id === 'dream_dust') {
             if (totalExtract <= 0) {
-                elements.cartelResult.innerHTML = `<div class="warn">${t('error_no_extract')}</div>`;
-            } else if (purePurity <= targetPurity) {
-                elements.cartelResult.innerHTML = `<div class="warn">⚠️ ${purePurity.toFixed(0)}% < ${targetPurity}%</div>`;
+                elements.cartelResult.innerHTML = `<div class="warn">${t('error_no_extract')}</div>${getCartelReputationHtml(reqPurity, 0, reqVials, 0)}`;
+            } else if (purePurity < targetPurity) {
+                const deliveredVials = estimateCartelDelivery(reqVials, targetPurity, purePurity, totalExtract, usableFiller, r.outputMl);
+                elements.cartelResult.innerHTML = `<div class="warn">⚠️ ${purePurity.toFixed(0)}% < ${targetPurity}%</div>${getCartelReputationHtml(reqPurity, purePurity, reqVials, deliveredVials)}`;
             } else {
                 const totalMixNeeded = reqVials * r.outputMl;
                 const extractForCartelVal = (targetPurity / purePurity) * totalMixNeeded;
                 const fillerNeeded = totalMixNeeded - extractForCartelVal;
                 
                 if (extractForCartelVal > totalExtract) {
-                    elements.cartelResult.innerHTML = `<div class="warn" style="border-color:#f87171">${t('cartel_not_enough_extract')}</div>`;
+                    const deliveredVials = estimateCartelDelivery(reqVials, targetPurity, purePurity, totalExtract, usableFiller, r.outputMl);
+                    elements.cartelResult.innerHTML = `<div class="warn" style="border-color:#f87171">${t('cartel_not_enough_extract')}</div>${getCartelReputationHtml(reqPurity, targetPurity, reqVials, deliveredVials)}`;
                 } else {
                     let fillerStatus = usableFiller >= fillerNeeded
                         ? `<span style="color:#a0d6a0">${t('cartel_filler_status_ok', {amount: fmt(usableFiller - fillerNeeded)})}</span>`
@@ -301,10 +428,15 @@ export function updateAll(event) {
                     const rawMushForCartel = usableMushForCartel / (1 - lossPct);
                     const rawMushRemaining = inputs.mush - rawMushForCartel;
                     
-                    const actualRep = calcReputation(reqPurity, targetPurity, diffKey);
-                    let repColor = actualRep > 10 ? '#7bc8f2' : '#a0d6a0';
-                    let repDesc = actualRep > 10 ? t('cartel_rep_threshold') : t('cartel_rep_max');
-                    const stipendWithPerk = 150 + (4 * reputation);
+                    const deliveredVials = estimateCartelDelivery(
+                        reqVials,
+                        targetPurity,
+                        purePurity,
+                        totalExtract,
+                        usableFiller,
+                        r.outputMl
+                    );
+                    const stipendWithPerk = 150;
                     const mixPurity = targetPurity / (1 - FINISHER_IMP[Math.min(fm, 4)]);
                     
                     elements.cartelResult.innerHTML = `
@@ -325,12 +457,9 @@ export function updateAll(event) {
                         </div>
                         <div class="rep-box" style="border-left-color:#f0b36a;background:#1c1f26;padding:6px;margin-top:4px">
                             <div style="font-size:.8rem;color:#cbd8e6;font-weight:600">${t('cartel_stipend')} <span style="color:#f0b36a">${t('approx')}${stipendWithPerk} ${t('currency')}</span></div>
-                            <div style="font-size:.7rem;color:#8b9eb0">${t('cartel_stipend_base', {rep: reputation})}</div>
+                            <div style="font-size:.7rem;color:#8b9eb0">${t('cartel_stipend_base')}</div>
                         </div>
-                        <div class="rep-box" style="padding:6px;margin-top:6px">
-                            <div style="font-size:.8rem;color:#cbd8e6;font-weight:600">${t('cartel_rep_bonus')} <span style="color:${repColor}">+${actualRep} ${t('rep_points')}</span></div>
-                            <div style="font-size:.7rem;color:#8b9eb0">${repDesc}</div>
-                        </div>
+                        ${getCartelReputationHtml(reqPurity, targetPurity, reqVials, deliveredVials)}
                         <div style="font-size:.75rem;color:#8b9eb0;margin-top:8px;background:#1a232e;padding:6px;border-radius:6px">
                             ${t('cartel_paste_usage_text', {cartel: fmt(rawMushForCartel), sell: fmt(rawMushRemaining)})}
                         </div>
@@ -339,31 +468,38 @@ export function updateAll(event) {
             }
         } else if (id === 'nomore_injector') {
             if (dreamExtractTotal <= 0) {
-                elements.cartelResult.innerHTML = `<div class="warn">${t('error_no_extract')}</div>`;
+                elements.cartelResult.innerHTML = `<div class="warn">${t('error_no_extract')}</div>${getCartelReputationHtml(reqPurity, 0, reqVials, 0)}`;
             } else if (extractForCartel > dreamExtractTotal) {
-                elements.cartelResult.innerHTML = `<div class="warn" style="border-color:#f87171">${t('cartel_not_enough_extract')}</div>`;
+                const deliveredVials = estimateCartelDelivery(reqVials, targetPurity, extractPurity, dreamExtractTotal, usableFiller, 2);
+                elements.cartelResult.innerHTML = `<div class="warn" style="border-color:#f87171">${t('cartel_not_enough_extract')}</div>${getCartelReputationHtml(reqPurity, Math.min(targetPurity, extractPurity), reqVials, deliveredVials)}`;
             } else {
                 const mixNeededForCartel = reqVials * 2;
                 const fillerNeeded = mixNeededForCartel - extractForCartel;
                 const extractForNomoreVal = dreamExtractTotal - extractForCartel;
-                const pureNomoreVolume = extractForNomoreVal * 0.6;
+                const convertedExtract = Math.min(extractForNomoreVal, inputs.reducing);
+                const pureNomoreVolume = convertedExtract * 0.6;
                 const saleItems = Math.floor(pureNomoreVolume / r.outputMl);
                 
                 let fillerStatus = usableFiller >= fillerNeeded
                     ? `<span style="color:#a0d6a0">${t('cartel_filler_status_ok', {amount: fmt(usableFiller - fillerNeeded)})}</span>`
                     : `<span style="color:#f87171">${t('cartel_filler_status_bad', {amount: fmt(fillerNeeded - usableFiller)})}</span>`;
                 
-                const actualRep = calcReputation(reqPurity, targetPurity, diffKey);
-                let repColor = actualRep > 10 ? '#7bc8f2' : '#a0d6a0';
-                let repDesc = actualRep > 10 ? t('cartel_rep_threshold') : t('cartel_rep_max');
-                const stipendWithPerk = 150 + (4 * reputation);
+                const deliveredVials = estimateCartelDelivery(
+                    reqVials,
+                    targetPurity,
+                    extractPurity,
+                    dreamExtractTotal,
+                    usableFiller,
+                    2
+                );
+                const stipendWithPerk = 150;
                 const mixPurity = targetPurity / (1 - FINISHER_IMP[Math.min(fm, 4)]);
                 
                 elements.cartelResult.innerHTML = `
                     <div style="font-size:.85rem;color:#cbd8e6;margin-bottom:8px">${t('cartel_turn_in_text', {vials: reqVials, purity: targetPurity})}</div>
                     <div style="background:#1e2a35;border-radius:6px;margin-bottom:8px;padding:8px">
                         <div style="font-size:.8rem;color:#a0d6a0;font-weight:600;margin-bottom:2px">${t('cartel_leave_nomore')}</div>
-                        <div class="line" style="padding:0"><span>${t('cartel_raw_extract')}</span><span class="amt" style="color:#a0d6a0">${t('cartel_extract_amount_text', {amount: fmt(extractForNomoreVal)})}</span></div>
+                        <div class="line" style="padding:0"><span>${t('cartel_raw_extract')}</span><span class="amt" style="color:#a0d6a0">${t('cartel_extract_amount_text', {amount: fmt(convertedExtract)})}</span></div>
                         <div class="line" style="padding:0"><span>${t('cartel_product_60')}</span><span class="amt" style="color:#a0d6a0">${t('cartel_extract_amount_text', {amount: fmt(pureNomoreVolume)})}</span></div>
                         <div class="line" style="padding:0"><span>${t('cartel_injectors')}</span><span class="amt" style="color:#a0d6a0">${t('cartel_sale_items_text', {amount: saleItems})}</span></div>
                     </div>
@@ -377,12 +513,9 @@ export function updateAll(event) {
                     </div>
                     <div class="rep-box" style="border-left-color:#f0b36a;background:#1c1f26;padding:6px;margin-top:4px">
                         <div style="font-size:.8rem;color:#cbd8e6;font-weight:600">${t('cartel_stipend')} <span style="color:#f0b36a">${t('approx')}${stipendWithPerk} ${t('currency')}</span></div>
-                        <div style="font-size:.7rem;color:#8b9eb0">${t('cartel_stipend_base', {rep: reputation})}</div>
+                        <div style="font-size:.7rem;color:#8b9eb0">${t('cartel_stipend_base')}</div>
                     </div>
-                    <div class="rep-box" style="padding:6px;margin-top:6px">
-                        <div style="font-size:.8rem;color:#cbd8e6;font-weight:600">${t('cartel_rep_bonus')} <span style="color:${repColor}">+${actualRep} ${t('rep_points')}</span></div>
-                        <div style="font-size:.7rem;color:#8b9eb0">${repDesc}</div>
-                    </div>
+                    ${getCartelReputationHtml(reqPurity, targetPurity, reqVials, deliveredVials)}
                 `;
             }
         }

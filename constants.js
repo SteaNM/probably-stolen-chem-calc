@@ -7,10 +7,10 @@ export const RECIPES = {
 };
 
 export const DIFF_SETTINGS = {
-    easy: { markup: 1.20, repGain: 1.50, repLoss: 0.50 },
-    normal: { markup: 1.15, repGain: 1.00, repLoss: 1.00 },
-    hard: { markup: 1.00, repGain: 0.75, repLoss: 1.25 },
-    extreme: { markup: 1.00, repGain: 0.50, repLoss: 2.00 }
+    easy: { markup: 1.20 },
+    normal: { markup: 1.15 },
+    hard: { markup: 1.00 },
+    extreme: { markup: 1.00 }
 };
 
 export const BLENDER_LOSS = [0.35, 0.20, 0.10, 0.05, 0.00];

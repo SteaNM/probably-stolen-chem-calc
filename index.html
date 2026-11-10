@@ -52,6 +52,7 @@
             <div class="panel">
                 <div class="rtitle" data-i18n="scanner">📥 Данные со сканера</div>
                 <div class="scanner-grid" id="scannerInputs"></div>
+                <div id="portionTotals" class="portion-totals" style="display:none"></div>
             </div>
             <div class="panel">
                 <div class="rtitle" data-i18n="costs">💸 Затраты</div>
@@ -105,20 +106,9 @@
                 </div>
                 <div id="fillerInfo" style="font-size:.75rem;color:#8b9eb0;margin-bottom:10px;line-height:1.4;background:#1a232e;padding:6px;border-radius:6px"></div>
                 <div class="field">
-                    <label data-i18n="cartel_quota">Квота (Неделя)</label>
-                    <select id="cartelWeek">
-                        <option value="10,40" data-i18n="week_1">Неделя 1</option>
-                        <option value="15,45" data-i18n="week_2">Неделя 2</option>
-                        <option value="20,50" data-i18n="week_3">Неделя 3</option>
-                        <option value="25,55" data-i18n="week_4">Неделя 4</option>
-                        <option value="30,60" data-i18n="week_5">Неделя 5</option>
-                        <option value="35,65" data-i18n="week_6">Неделя 6</option>
-                        <option value="40,70" data-i18n="week_7">Неделя 7+</option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label data-i18n="cartel_rep">Репутация Картеля</label>
-                    <input type="number" id="cartelRep" min="0" max="200" step="1" value="0">
+                    <label for="cartelWeek" data-i18n="cartel_week_number">Номер недели</label>
+                    <input type="number" id="cartelWeek" min="1" step="1" value="1">
+                    <div class="hint" data-i18n="cartel_week_hint">Квота растёт на 5 флаконов в неделю, чистота — до 70%.</div>
                 </div>
                 <div class="field">
                     <label data-i18n="cartel_mode">Целевая чистота</label>

@@ -1,11 +1,12 @@
 import { t, setLang } from './utils.js';
 import { updateAll } from './logic.js';
-import { renderMods, renderScannerInputs, renderStepsLayout, elements } from './ui.js';
+import { addPortionRow, getPortionRows, removePortionRow, renderMods, renderScannerInputs, renderStepsLayout, elements } from './ui.js';
 import { RECIPES } from './constants.js';
 
 window.updateAll = updateAll;
 
 function updateLanguage(preserveInputs = false) {
+    const savedRows = preserveInputs ? getPortionRows() : [];
     const savedValues = preserveInputs
         ? new Map(
             Array.from(document.querySelectorAll('#modgrid input, #scannerInputs input, #steps input'))
@@ -20,7 +21,7 @@ function updateLanguage(preserveInputs = false) {
     
     const r = RECIPES[elements.recipeSel.value];
     renderMods(r);
-    renderScannerInputs(r);
+    renderScannerInputs(r, savedRows);
     renderStepsLayout(elements.recipeSel.value);
 
     savedValues.forEach((value, id) => {
@@ -47,8 +48,25 @@ function init() {
         updateAll();
     });
 
-    document.querySelector('.calc').addEventListener('input', updateAll);
-    document.querySelector('.calc').addEventListener('change', updateAll);
+    const calc = document.querySelector('.calc');
+    const handleInput = (event) => {
+        if (event.target.id === 'recipe' && event.type === 'input') return;
+        updateAll(event);
+    };
+    calc.addEventListener('input', handleInput);
+    calc.addEventListener('change', handleInput);
+    calc.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-action]');
+        if (!button) return;
+
+        if (button.dataset.action === 'add-portion') {
+            addPortionRow();
+            updateAll();
+        } else if (button.dataset.action === 'remove-portion') {
+            removePortionRow(Number(button.dataset.row));
+            updateAll();
+        }
+    });
 }
 
 init();

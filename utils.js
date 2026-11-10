@@ -1,5 +1,4 @@
 import { TRANSLATIONS } from './translations.js';
-import { DIFF_SETTINGS } from './constants.js';
 
 let currentLang = 'ru';
 
@@ -23,26 +22,47 @@ export function fmt(v) {
     return v.toFixed(1);
 }
 
-export function getMeasurementHtml(amount) {
+export function getMeasurementHtml(amount, { wholeMlOnly = false } = {}) {
     if (!amount || amount <= 0) return '';
-    let rem = Math.round(amount * 10) / 10, integerPart = Math.floor(rem), fractionalPart = Math.round((rem - integerPart) * 10) / 10;
-    let beakers = [];
-    if (integerPart >= 50) { let c = Math.floor(integerPart / 50); beakers.push(`${c}×50${t('label_ml')}`); integerPart %= 50; }
-    if (integerPart >= 25) { let c = Math.floor(integerPart / 25); beakers.push(`${c}×25${t('label_ml')}`); integerPart %= 25; }
-    if (integerPart >= 5) { let c = Math.floor(integerPart / 5); beakers.push(`${c}×5${t('label_ml')}`); integerPart %= 5; }
-    if (integerPart >= 1) beakers.push(`${integerPart}×1${t('label_ml')}`);
-    
-    let pills = [], tempFrac = fractionalPart;
-    let c06 = Math.floor(tempFrac / 0.6);
-    if (c06 > 0) { pills.push(`${c06}×${t('pill_zyanide')}`); tempFrac = Math.round((tempFrac - c06 * 0.6) * 10) / 10; }
-    let c05 = Math.floor(tempFrac / 0.5);
-    if (c05 > 0) { pills.push(`${c05}×${t('pill_phanta')}`); tempFrac = Math.round((tempFrac - c05 * 0.5) * 10) / 10; }
-    let c01 = Math.round(tempFrac / 0.1);
-    if (c01 > 0) pills.push(`${c01}×${t('pill_birth')}`);
+    let rem = wholeMlOnly
+        ? Math.ceil(amount - 1e-9)
+        : Math.round(amount * 10) / 10;
+    let integerPart = Math.floor(rem);
+    const fractionalPart = Math.round((rem - integerPart) * 10) / 10;
+    const flasks = [];
+    const pipettes = [];
+
+    for (const size of [100, 50, 25]) {
+        const count = Math.floor(integerPart / size);
+        if (count > 0) flasks.push(`${count}×${size}${t('label_ml')}`);
+        integerPart %= size;
+    }
+
+    for (const size of [5, 1]) {
+        const count = Math.floor(integerPart / size);
+        if (count > 0) pipettes.push(`${count}×${size}${t('label_ml')}`);
+        integerPart %= size;
+    }
+
+    let pills = [];
+    if (!wholeMlOnly) {
+        let tempFrac = fractionalPart;
+        let c06 = Math.floor(tempFrac / 0.6);
+        if (c06 > 0) { pills.push(`${c06}×${t('pill_zyanide')}`); tempFrac = Math.round((tempFrac - c06 * 0.6) * 10) / 10; }
+        let c05 = Math.floor(tempFrac / 0.5);
+        if (c05 > 0) { pills.push(`${c05}×${t('pill_phanta')}`); tempFrac = Math.round((tempFrac - c05 * 0.5) * 10) / 10; }
+        let c01 = Math.round(tempFrac / 0.1);
+        if (c01 > 0) pills.push(`${c01}×${t('pill_birth')}`);
+    }
     
     let res = '';
-    if (beakers.length > 0) {
-        res += `<span style="color:#a0d6a0">${t('beakers')}</span> <span style="color:#f0b36a">${beakers.join(' + ')}</span>`;
+    if (flasks.length > 0) {
+        res += `<span style="color:#a0d6a0">${t('flasks')}</span> <span style="color:#f0b36a">${flasks.join(' + ')}</span>`;
+    }
+
+    if (pipettes.length > 0) {
+        if (res) res += ` <span style="color:#4a6a52">|</span> `;
+        res += `<span style="color:#a0d6a0">${t('pipettes')}</span> <span style="color:#f0b36a">${pipettes.join(' + ')}</span>`;
     }
     
     if (pills.length > 0) {
@@ -64,14 +84,19 @@ export function getGrade(p) {
     return { n: t('grade_starch'), c: '#f0a070', m: -0.95 };
 }
 
-export function calcReputation(targetPurity, actualPurity, diffKey) {
-    let baseRep = 0;
-    if (actualPurity < targetPurity) baseRep = -(targetPurity - actualPurity);
-    else if (actualPurity === targetPurity) baseRep = 0;
-    else if (actualPurity <= targetPurity + 10) baseRep = actualPurity - targetPurity;
-    else { const bonus10 = 10, excess = actualPurity - (targetPurity + 10); baseRep = bonus10 + Math.floor(excess / 4); }
-    const diff = DIFF_SETTINGS[diffKey];
-    if (baseRep > 0) return Math.floor(baseRep * diff.repGain);
-    if (baseRep < 0) return Math.ceil(baseRep * diff.repLoss);
-    return 0;
+export function calcReputation(targetPurity, actualPurity, requiredCount, deliveredCount) {
+    if (deliveredCount <= 0 || actualPurity <= targetPurity / 4) {
+        return { gameOver: true, count: 0, purity: 0, total: 0 };
+    }
+
+    const count = deliveredCount < requiredCount
+        ? (deliveredCount - requiredCount) * 4
+        : deliveredCount;
+    let purity = 0;
+
+    if (actualPurity < targetPurity) purity = -(targetPurity - actualPurity);
+    else if (actualPurity <= targetPurity + 10) purity = actualPurity - targetPurity;
+    else purity = 10 + Math.floor((actualPurity - targetPurity - 10) / 4);
+
+    return { gameOver: false, count, purity, total: count + purity };
 }

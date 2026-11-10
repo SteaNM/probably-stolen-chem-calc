@@ -6,6 +6,7 @@ export const elements = {
     alcoholType: document.getElementById('alcoholType'),
     difficulty: document.getElementById('difficulty'),
     scannerInputs: document.getElementById('scannerInputs'),
+    portionTotals: document.getElementById('portionTotals'),
     pipelineBox: document.getElementById('pipelineBox'),
     stepsEl: document.getElementById('steps'),
     warnEl: document.getElementById('warnings'),
@@ -23,7 +24,6 @@ export const elements = {
     scanStarch: document.getElementById('scan_starch'),
     scanSugar: document.getElementById('scan_sugar'),
     cartelWeek: document.getElementById('cartelWeek'),
-    cartelRep: document.getElementById('cartelRep'),
     cartelMode: document.getElementById('cartelMode'),
     langSwitch: document.getElementById('langSwitch')
 };
@@ -43,15 +43,85 @@ export function renderMods(r) {
     });
 }
 
-export function renderScannerInputs(r) {
+const PORTION_RECIPES = new Set(['dream_dust', 'nightmare_dust', 'caffeine_pill', 'nomore_injector']);
+
+function getPortionFields(id) {
+    const fields = [
+        { key: 'mush', label: id === 'nightmare_dust' ? t('input_mush_nightmare') : id === 'caffeine_pill' ? t('input_mush_coffee') : t('input_mush') },
+        { key: 'protein', label: id === 'caffeine_pill' ? t('input_protein_coffee') : t('input_protein') }
+    ];
+    if (id === 'caffeine_pill') {
+        fields.push({ key: 'fat', label: t('input_fat') });
+        fields.push({ key: 'caffeine', label: t('input_caffeine_in_beans') });
+    }
+    if (id === 'nomore_injector') fields.push({ key: 'reducing', label: t('input_reducing') });
+    return fields;
+}
+
+export function getPortionRows() {
+    return Array.from(elements.scannerInputs.querySelectorAll('.portion-row')).map(row => {
+        const values = {};
+        row.querySelectorAll('[data-ingredient]').forEach(input => {
+            values[input.dataset.ingredient] = input.value;
+        });
+        return {
+            count: row.querySelector('[data-portion-count]').value,
+            values
+        };
+    });
+}
+
+export function renderScannerInputs(r, savedRows = []) {
     elements.scannerInputs.innerHTML = '';
-    let inputs = [];
     const id = elements.recipeSel.value;
-    if (id === 'dream_dust') inputs = [{key:'mush', label: t('input_mush')}, {key:'protein', label: t('input_protein')}];
-    else if (id === 'nightmare_dust') inputs = [{key:'mush', label: t('input_mush_nightmare')}, {key:'protein', label: t('input_protein')}];
-    else if (id === 'caffeine_pill') inputs = [{key:'mush', label: t('input_mush_coffee')}, {key:'protein', label: t('input_protein_coffee')}, {key:'fat', label: t('input_fat')}];
-    else if (id === 'phanta_pill') inputs = [{key:'methylol', label: t('input_methylol')}, {key:'stab', label: t('input_stab')}];
-    else if (id === 'nomore_injector') inputs = [{key:'mush', label: t('input_mush')}, {key:'protein', label: t('input_protein')}, {key:'reducing', label: t('input_reducing')}];
+    const usesPortions = PORTION_RECIPES.has(id);
+    elements.scannerInputs.classList.toggle('portion-list', usesPortions);
+
+    if (usesPortions) {
+        const rows = savedRows.length > 0 ? savedRows : [{ count: '1', values: {} }];
+        const fields = getPortionFields(id);
+
+        rows.forEach((row, rowIndex) => {
+            const card = document.createElement('div');
+            card.className = 'portion-row';
+            card.innerHTML = `
+                <div class="portion-row-header">
+                    <strong>${t('portion_row', { number: rowIndex + 1 })}</strong>
+                    <button type="button" class="portion-remove" data-action="remove-portion" data-row="${rowIndex}" ${rows.length === 1 ? 'disabled' : ''} aria-label="${t('remove_portion')}">−</button>
+                </div>
+                <div class="portion-fields">
+                    ${fields.map(field => `
+                        <label class="portion-field">
+                            <span class="portion-field-label">${field.label}</span>
+                            <span class="portion-input-wrap">
+                                <input type="number" id="portion_${rowIndex}_${field.key}" min="0" step="0.1" value="${row.values?.[field.key] ?? '0'}" data-ingredient="${field.key}" aria-label="${field.label}">
+                                <span>${t('label_ml')}</span>
+                            </span>
+                        </label>
+                    `).join('')}
+                </div>
+                <label class="portion-count">
+                    <span class="portion-field-label">${t('portion_count')}</span>
+                    <span class="portion-input-wrap">
+                        <input type="number" id="portion_${rowIndex}_count" min="1" step="1" value="${row.count || '1'}" data-portion-count aria-label="${t('portion_count')}">
+                        <span>×</span>
+                    </span>
+                </label>
+            `;
+            elements.scannerInputs.appendChild(card);
+        });
+
+        const addButton = document.createElement('button');
+        addButton.type = 'button';
+        addButton.className = 'portion-add';
+        addButton.dataset.action = 'add-portion';
+        addButton.textContent = `+ ${t('add_portion')}`;
+        elements.scannerInputs.appendChild(addButton);
+        return;
+    }
+
+    let inputs = [];
+    if (id === 'phanta_pill') inputs = [{key:'methylol', label: t('input_methylol')}, {key:'stab', label: t('input_stab')}];
 
     inputs.forEach(inp => {
         const card = document.createElement('div');
@@ -59,6 +129,20 @@ export function renderScannerInputs(r) {
         card.innerHTML = `<h4>${inp.label}</h4><input type="number" min="0" step="0.1" value="0" id="scan_${inp.key}">`;
         elements.scannerInputs.appendChild(card);
     });
+}
+
+export function addPortionRow() {
+    renderScannerInputs(
+        null,
+        [...getPortionRows(), { count: '1', values: {} }]
+    );
+}
+
+export function removePortionRow(index) {
+    const rows = getPortionRows();
+    if (rows.length <= 1) return;
+    rows.splice(index, 1);
+    renderScannerInputs(null, rows);
 }
 
 export function renderStepsLayout(id) {
@@ -81,16 +165,16 @@ export function renderStepsLayout(id) {
         const descMush = id === 'nightmare_dust' ? t('desc_nightmare') : t('desc_mush');
         html = `
             <div class="step"><div class="stitle">${t('step_blender')}</div><div class="desc">${descMush}</div></div>
-            <div class="step"><div class="stitle">${t('step_extraction')}</div><div class="desc">${t('desc_extraction')}</div><div class="line"><span>${t('label_alcohol')}</span><span class="amt" id="amt-alc">0 ${t('label_ml')}</span></div></div>
-            <div class="step"><div class="stitle">${t('step_cleaning')}</div><div class="desc">${t('desc_cleaning')}</div><div class="line"><span>${t('label_acid_base')}</span><span class="amt" id="amt-prot">0 ${t('label_ml')}</span></div></div>
+            <div class="step"><div class="stitle">${t('step_extraction')}</div><div class="desc">${t('desc_extraction')}</div><div class="line"><span>${t('label_alcohol')}</span><span class="amt" id="amt-alc"></span></div></div>
+            <div class="step"><div class="stitle">${t('step_cleaning')}</div><div class="desc">${t('desc_cleaning')}</div><div class="line"><span>${t('label_acid_base')}</span><span class="amt" id="amt-prot"></span></div></div>
             <div class="step"><div class="stitle">${t('step_filtering')}</div><div class="desc">${t('desc_filtering')}</div></div>
             <div class="step"><div class="stitle">${t('step_evap_pack')}</div><div class="desc">${descEvap}</div>${purityBlock}</div>`;
     } else if (id === 'caffeine_pill') {
         html = `
             <div class="step"><div class="stitle">${t('step_blender')}</div><div class="desc">${t('desc_coffee')}</div></div>
-            <div class="step"><div class="stitle">${t('step_agent')}</div><div class="desc">${t('desc_agent_coffee')}</div><div class="line"><span>${t('label_agent')}</span><span class="amt" id="amt-fat">0 ${t('label_ml')}</span></div></div>
-            <div class="step"><div class="stitle">${t('step_extraction')}</div><div class="desc">${t('desc_extract_coffee')}</div><div class="line"><span>${t('label_alcohol')}</span><span class="amt" id="amt-alc">0 ${t('label_ml')}</span></div></div>
-            <div class="step"><div class="stitle">${t('step_cleaning')}</div><div class="desc">${t('desc_clean_coffee')}</div><div class="line"><span>${t('label_acid_base')}</span><span class="amt" id="amt-prot">0 ${t('label_ml')}</span></div></div>
+            <div class="step"><div class="stitle">${t('step_agent')}</div><div class="desc">${t('desc_agent_coffee')}</div><div class="line"><span>${t('label_agent')}</span><span class="amt" id="amt-fat"></span></div></div>
+            <div class="step"><div class="stitle">${t('step_extraction')}</div><div class="desc">${t('desc_extract_coffee')}</div><div class="line"><span>${t('label_alcohol')}</span><span class="amt" id="amt-alc"></span></div></div>
+            <div class="step"><div class="stitle">${t('step_cleaning')}</div><div class="desc">${t('desc_clean_coffee')}</div><div class="line"><span>${t('label_acid_base')}</span><span class="amt" id="amt-prot"></span></div></div>
             <div class="step"><div class="stitle">${t('step_evap_pack')}</div><div class="desc">${t('desc_evap_coffee')}</div>${purityBlock}</div>`;
     } else if (id === 'phanta_pill') {
         html = `
@@ -101,10 +185,10 @@ export function renderStepsLayout(id) {
             <div class="step"><div class="stitle">${t('step_evap_pack')}</div><div class="desc">${t('desc_evap_phanta')}</div>${purityBlock}</div>`;
     } else if (id === 'nomore_injector') {
         html = `
-            <div class="step"><div class="stitle">${t('step_extract_nomore')}</div><div class="desc">${t('desc_extract_nomore')}</div><div class="line"><span>${t('label_alcohol')}</span><span class="amt" id="amt-alc">0 ${t('label_ml')}</span></div></div>
-            <div class="step"><div class="stitle">${t('step_mix_nomore')}</div><div class="desc">${t('desc_clean_nomore')}</div><div class="line"><span>${t('label_acid_base')}</span><span class="amt" id="amt-prot">0 ${t('label_ml')}</span></div>${purityBlock}</div>
-            <div class="step"><div class="stitle">${t('step_mix')}</div><div class="desc">${t('desc_mix_nomore')}</div><div class="line"><span>${t('label_extract')}</span><span class="amt" id="amt-ext">0 ${t('label_ml')}</span></div><div class="line"><span>${t('label_reducing')}</span><span class="amt" id="amt-red">0 ${t('label_ml')}</span></div></div>
-            <div class="step"><div class="stitle">${t('step_agent')}</div><div class="desc">${t('desc_agent_nomore')}</div><div class="line"><span>${t('label_agent')}</span><span class="amt" id="amt-agent">0 ${t('label_ml')}</span></div></div>
+            <div class="step"><div class="stitle">${t('step_extract_nomore')}</div><div class="desc">${t('desc_extract_nomore')}</div><div class="line"><span>${t('label_alcohol')}</span><span class="amt" id="amt-alc"></span></div></div>
+            <div class="step"><div class="stitle">${t('step_mix_nomore')}</div><div class="desc">${t('desc_clean_nomore')}</div><div class="line"><span>${t('label_acid_base')}</span><span class="amt" id="amt-prot"></span></div>${purityBlock}</div>
+            <div class="step"><div class="stitle">${t('step_mix')}</div><div class="desc">${t('desc_mix_nomore')}</div><div class="line"><span>${t('label_extract')}</span><span class="amt" id="amt-ext"></span></div><div class="line"><span>${t('label_reducing')}</span><span class="amt" id="amt-red"></span></div></div>
+            <div class="step"><div class="stitle">${t('step_agent')}</div><div class="desc">${t('desc_agent_nomore')}</div><div class="line"><span>${t('label_agent')}</span><span class="amt" id="amt-agent"></span></div></div>
             <div class="step"><div class="stitle">${t('step_reaction')}</div><div class="desc">${t('desc_react_nomore')}</div></div>
             <div class="step"><div class="stitle">${t('step_filtering')}</div><div class="desc">${t('desc_filter_nomore')}</div></div>`;
     }
