@@ -54,10 +54,13 @@ export function updateAll() {
     let extractForCartel = 0;
     let extractForNomore = 0;
 
+    // --- ОБНОВЛЕНИЕ КОНВЕЙЕРА С ДИНАМИЧЕСКИМ СБРОСОМ ---
     if (id === 'dream_dust' || id === 'nightmare_dust' || id === 'caffeine_pill') {
         const rawPaste = inputs.mush;
-        if (rawPaste <= 0) errorMsg = t('error_no_paste');
-        else {
+        if (rawPaste <= 0) {
+            errorMsg = t('error_no_paste');
+            elements.pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_paste')} <b>0 ${t('pipe_ml')}</b><br>${t('pipe_blender_lost')} (${bm} ${t('pipe_mod')}) ${t('pipe_loses')} ${(lossPct * 100)}%: <b style="color:#f87171">−0 ${t('pipe_ml')}</b><br>${t('pipe_left')} <b>0 ${t('pipe_ml')}</b><br>${t('pipe_extract')} (${r.extractYield * 100}%): <b style="color:#a0d6a0">0 ${t('pipe_ml')}</b>`;
+        } else {
             const lostAmount = rawPaste * lossPct;
             const usablePaste = rawPaste - lostAmount;
             totalExtract = usablePaste * r.extractYield;
@@ -65,8 +68,10 @@ export function updateAll() {
         }
     } else if (id === 'nomore_injector') {
         const rawPaste = inputs.mush;
-        if (rawPaste <= 0) errorMsg = t('error_no_paste');
-        else {
+        if (rawPaste <= 0) {
+            errorMsg = t('error_no_paste');
+            elements.pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_paste')} <b>0 ${t('pipe_ml')}</b>`;
+        } else {
             const lostAmount = rawPaste * lossPct;
             const usablePaste = rawPaste - lostAmount;
             dreamExtractTotal = usablePaste * 0.5;
@@ -82,8 +87,10 @@ export function updateAll() {
             extractForNomore = Math.max(0, dreamExtractTotal - extractForCartel);
             
             const reducing = inputs.reducing;
-            if (reducing <= 0) errorMsg = t('error_no_reducing');
-            else {
+            if (reducing <= 0) {
+                errorMsg = t('error_no_reducing');
+                elements.pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_paste')} <b>${fmt(rawPaste)} ${t('pipe_ml')}</b><br>${t('pipe_dream_extract')} <b style="color:#7bc8f2">${fmt(dreamExtractTotal)} ${t('pipe_ml')}</b><br>${t('pipe_left_nomore')} <b style="color:#a0d6a0">${fmt(extractForNomore)} ${t('pipe_ml')}</b>`;
+            } else {
                 let effectiveExtract = Math.min(extractForNomore, reducing);
                 if (reducing < extractForNomore) {
                     elements.warnEl.innerHTML = `<div class="warn">${t('warn_lack_reducing')} ${fmt(extractForNomore)} ${t('warn_lack_reducing_2')} ${fmt(extractForNomore)} ${t('warn_lack_reducing_3')} ${fmt(reducing)} ${t('warn_lack_reducing_4')}</div>`;
@@ -97,19 +104,30 @@ export function updateAll() {
         }
     } else if (id === 'phanta_pill') {
         const methylol = inputs.methylol;
-        if (methylol <= 0) errorMsg = t('error_no_methylol');
-        else if (hm < 1) {
+        if (methylol <= 0) {
+            errorMsg = t('error_no_methylol');
+            elements.pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_methylol')} <b>0 ${t('pipe_ml')}</b><br>${t('pipe_output')} <b>0 ${t('pipe_ml')}</b>`;
+        } else if (hm < 1) {
             isCraftable = false; totalExtract = 0;
             elements.warnEl.innerHTML = `<div class="warn" style="border-left:4px solid #f87171;background:#2a1616;color:#f87171">${t('warn_no_heater')}</div>`;
+            elements.pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_methylol')} <b>${fmt(methylol)} ${t('pipe_ml')}</b><br>${t('pipe_output')} <b style="color:#f87171">0 ${t('pipe_ml')}</b>`;
         } else {
             totalExtract = methylol * r.extractYield;
             elements.warnEl.innerHTML = '';
+            elements.pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_methylol')} <b>${fmt(methylol)} ${t('pipe_ml')}</b><br>${t('pipe_output')} <b style="color:#a0d6a0">${fmt(totalExtract)} ${t('pipe_ml')}</b>`;
         }
-        elements.pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_methylol')} <b>${fmt(methylol)} ${t('pipe_ml')}</b><br>${t('pipe_output')} <b style="color:${isCraftable ? '#a0d6a0' : '#f87171'}">${fmt(totalExtract)} ${t('pipe_ml')}</b>`;
     }
 
+    // Если ошибка (например, пустые поля), очищаем результаты и выходим
     if (errorMsg) {
         elements.errEl.textContent = errorMsg;
+        elements.outputBox.innerHTML = `
+            <div style="font-size:.85rem;color:#cbd8e6;margin-bottom:6px">${t('total_output')}</div>
+            <div class="line" style="padding:0 0 2px 0"><span>${t('ready_product')}</span><span class="amt" style="color:#f87171">0 ${t('label_ml')}</span></div>
+            <div class="line" style="padding:0"><span>${t('ready_units')}</span><span class="amt" style="color:#f87171;font-size:1.1rem">0 ${t(r.unitKey)}</span></div>
+        `;
+        elements.revenueContainer.innerHTML = '';
+        if (hasCartel) elements.cartelResult.innerHTML = '';
         return;
     }
 
