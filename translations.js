@@ -1,4 +1,4 @@
-const TRANSLATIONS = {
+export const TRANSLATIONS = {
     ru: {
         title: "Probably Stolen",
         sub: "Калькулятор химика",
@@ -67,6 +67,7 @@ const TRANSLATIONS = {
         module_blender: "Блендер",
         module_heater: "Термоплита",
         module_packer: "Упаковщик",
+        manual: "Вручную",
         grade_pure: "Чистое вещество",
         grade_pharma: "Фармацевтическая чистота",
         grade_near: "Аптечная чистота",
@@ -181,7 +182,12 @@ const TRANSLATIONS = {
         cartel_rep_threshold: "(Порог +10 превышен)",
         cartel_rep_max: "(Макс. бонус)",
         cartel_stipend_base: "(Базовая 150 + 4 × {rep} реп.)",
-        error_no_extract: "Нет экстракта."
+        error_no_extract: "Нет экстракта.",
+        cartel_vials_label: "Флаконов",
+        cartel_product_60: "Готовый Оксинет (60%)",
+        rep_points: "очков",
+        approx: "~",
+        times: "x"
     },
     en: {
         title: "Probably Stolen",
@@ -251,6 +257,7 @@ const TRANSLATIONS = {
         module_blender: "Blender",
         module_heater: "Heating Plate",
         module_packer: "Packer",
+        manual: "Manual",
         grade_pure: "Lab Pure",
         grade_pharma: "Pharma Grade",
         grade_near: "Near-Pharma",
@@ -365,6 +372,11 @@ const TRANSLATIONS = {
         cartel_rep_threshold: "(Threshold +10 exceeded)",
         cartel_rep_max: "(Max bonus)",
         cartel_stipend_base: "(Base 150 + 4 × {rep} rep.)",
-        error_no_extract: "No extract."
+        error_no_extract: "No extract.",
+        cartel_vials_label: "Vials",
+        cartel_product_60: "Ready Nomore (60%)",
+        rep_points: "pts",
+        approx: "~",
+        times: "x"
     }
 };
