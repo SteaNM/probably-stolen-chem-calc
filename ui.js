@@ -24,6 +24,7 @@ export const elements = {
     scanStarch: document.getElementById('scan_starch'),
     scanSugar: document.getElementById('scan_sugar'),
     cartelWeek: document.getElementById('cartelWeek'),
+    cartelRep: document.getElementById('cartelRep'),
     cartelMode: document.getElementById('cartelMode'),
     langSwitch: document.getElementById('langSwitch')
 };

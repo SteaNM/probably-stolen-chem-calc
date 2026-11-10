@@ -398,6 +398,7 @@ export function updateAll(event) {
         elements.fillerInfo.innerHTML = `📥 <b>${t('cartel_filler')}:</b> ${fmt(totalRawFiller)} ${t('label_ml')} → ${t('after_blender')}: <b style="color:#f0b36a">${fmt(usableFiller)} ${t('label_ml')}</b>`;
         
         const { vials: reqVials, purity: reqPurity } = getCartelRequirements(numericValues.get('cartelWeek'));
+        const reputation = numericValues.get('cartelRep');
         const mode = elements.cartelMode.value;
         let targetPurity = reqPurity;
         if (mode === 'bonus') targetPurity += 10;
@@ -436,7 +437,7 @@ export function updateAll(event) {
                         usableFiller,
                         r.outputMl
                     );
-                    const stipendWithPerk = 150;
+                    const stipendWithPerk = 150 + 4 * reputation;
                     const mixPurity = targetPurity / (1 - FINISHER_IMP[Math.min(fm, 4)]);
                     
                     elements.cartelResult.innerHTML = `
@@ -457,7 +458,7 @@ export function updateAll(event) {
                         </div>
                         <div class="rep-box" style="border-left-color:#f0b36a;background:#1c1f26;padding:6px;margin-top:4px">
                             <div style="font-size:.8rem;color:#cbd8e6;font-weight:600">${t('cartel_stipend')} <span style="color:#f0b36a">${t('approx')}${stipendWithPerk} ${t('currency')}</span></div>
-                            <div style="font-size:.7rem;color:#8b9eb0">${t('cartel_stipend_base')}</div>
+                            <div style="font-size:.7rem;color:#8b9eb0">${t('cartel_stipend_base', {rep: reputation})}</div>
                         </div>
                         ${getCartelReputationHtml(reqPurity, targetPurity, reqVials, deliveredVials)}
                         <div style="font-size:.75rem;color:#8b9eb0;margin-top:8px;background:#1a232e;padding:6px;border-radius:6px">
@@ -492,7 +493,7 @@ export function updateAll(event) {
                     usableFiller,
                     2
                 );
-                const stipendWithPerk = 150;
+                const stipendWithPerk = 150 + 4 * reputation;
                 const mixPurity = targetPurity / (1 - FINISHER_IMP[Math.min(fm, 4)]);
                 
                 elements.cartelResult.innerHTML = `
@@ -513,7 +514,7 @@ export function updateAll(event) {
                     </div>
                     <div class="rep-box" style="border-left-color:#f0b36a;background:#1c1f26;padding:6px;margin-top:4px">
                         <div style="font-size:.8rem;color:#cbd8e6;font-weight:600">${t('cartel_stipend')} <span style="color:#f0b36a">${t('approx')}${stipendWithPerk} ${t('currency')}</span></div>
-                        <div style="font-size:.7rem;color:#8b9eb0">${t('cartel_stipend_base')}</div>
+                        <div style="font-size:.7rem;color:#8b9eb0">${t('cartel_stipend_base', {rep: reputation})}</div>
                     </div>
                     ${getCartelReputationHtml(reqPurity, targetPurity, reqVials, deliveredVials)}
                 `;
