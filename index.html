@@ -22,6 +22,7 @@
     </div>
     
     <div class="grid-container" id="mainGrid">
+        <!-- Left Column -->
         <div class="col">
             <div class="field">
                 <label for="recipe" data-i18n="product">Продукт</label>
@@ -73,6 +74,7 @@
             </div>
         </div>
         
+        <!-- Center Column -->
         <div class="col">
             <div class="panel" style="flex:1">
                 <div class="rtitle" data-i18n="recipe_process">📋 Рецепт и процесс</div>
@@ -83,6 +85,7 @@
             </div>
         </div>
         
+        <!-- Right Column -->
         <div class="col">
             <div class="panel">
                 <div class="rtitle" data-i18n="results">📊 Результаты</div>
@@ -91,6 +94,7 @@
             </div>
         </div>
         
+        <!-- Cartel Column -->
         <div class="col" id="col-cartel">
             <div class="panel cartel-panel" id="cartelBox" style="display:none">
                 <div class="rtitle rtitle-cartel" data-i18n="cartel">👑 Сдача Картеля</div>
@@ -108,13 +112,13 @@
                 <div class="field">
                     <label data-i18n="cartel_quota">Квота (Неделя)</label>
                     <select id="cartelWeek">
-                        <option value="10,40">Неделя 1: 10, 40%</option>
-                        <option value="15,45">Неделя 2: 15, 45%</option>
-                        <option value="20,50">Неделя 3: 20, 50%</option>
-                        <option value="25,55">Неделя 4: 25, 55%</option>
-                        <option value="30,60">Неделя 5: 30, 60%</option>
-                        <option value="35,65">Неделя 6: 35, 65%</option>
-                        <option value="40,70">Неделя 7+: 40, 70%</option>
+                        <option value="10,40" data-i18n="week_1">Неделя 1</option>
+                        <option value="15,45" data-i18n="week_2">Неделя 2</option>
+                        <option value="20,50" data-i18n="week_3">Неделя 3</option>
+                        <option value="25,55" data-i18n="week_4">Неделя 4</option>
+                        <option value="30,60" data-i18n="week_5">Неделя 5</option>
+                        <option value="35,65" data-i18n="week_6">Неделя 6</option>
+                        <option value="40,70" data-i18n="week_7">Неделя 7+</option>
                     </select>
                 </div>
                 <div class="field">
@@ -139,11 +143,11 @@
     const t = (key) => TRANSLATIONS[currentLang][key] || key;
 
     const RECIPES = {
-        dream_dust: { outputMl: 2, unit: 'флаконов', isBlendable: true, extractYield: 0.5, alcoholRatio: 5, baseValue: 18, contrabandMarkup: 0.70 },
-        nightmare_dust: { outputMl: 4, unit: 'флаконов', isBlendable: true, extractYield: 0.5, alcoholRatio: 5, baseValue: 36, contrabandMarkup: 1.00 },
-        caffeine_pill: { outputMl: 5, unit: 'пилюль', isBlendable: true, extractYield: 0.75, alcoholRatio: 0.75, baseValue: 10, contrabandMarkup: 0 },
-        phanta_pill: { outputMl: 0.5, unit: 'пилюль', isBlendable: false, extractYield: 0.1, baseValue: 12, contrabandMarkup: 1.00 },
-        nomore_injector: { outputMl: 4, unit: 'инъекторов', isBlendable: true, extractYield: 0.5, baseValue: 50, contrabandMarkup: 0 }
+        dream_dust: { outputMl: 2, unitKey: 'unit_vials', isBlendable: true, extractYield: 0.5, alcoholRatio: 5, baseValue: 18, contrabandMarkup: 0.70 },
+        nightmare_dust: { outputMl: 4, unitKey: 'unit_vials', isBlendable: true, extractYield: 0.5, alcoholRatio: 5, baseValue: 36, contrabandMarkup: 1.00 },
+        caffeine_pill: { outputMl: 5, unitKey: 'unit_pills', isBlendable: true, extractYield: 0.75, alcoholRatio: 0.75, baseValue: 10, contrabandMarkup: 0 },
+        phanta_pill: { outputMl: 0.5, unitKey: 'unit_pills', isBlendable: false, extractYield: 0.1, baseValue: 12, contrabandMarkup: 1.00 },
+        nomore_injector: { outputMl: 4, unitKey: 'unit_injectors', isBlendable: true, extractYield: 0.5, baseValue: 50, contrabandMarkup: 0 }
     };
 
     const DIFF_SETTINGS = {
@@ -259,11 +263,12 @@
     function renderScannerInputs(r) {
         scannerInputs.innerHTML = '';
         let inputs = [];
-        if (r.name === 'dream_dust') inputs = [{key:'mush', label: t('input_mush')}, {key:'protein', label: t('input_protein')}];
-        else if (r.name === 'nightmare_dust') inputs = [{key:'mush', label: t('input_mush_nightmare')}, {key:'protein', label: t('input_protein')}];
-        else if (r.name === 'caffeine_pill') inputs = [{key:'mush', label: t('input_mush_coffee')}, {key:'protein', label: t('input_protein_coffee')}, {key:'fat', label: t('input_fat')}];
-        else if (r.name === 'phanta_pill') inputs = [{key:'methylol', label: t('input_methylol')}, {key:'stab', label: t('input_stab')}];
-        else if (r.name === 'nomore_injector') inputs = [{key:'mush', label: t('input_mush')}, {key:'protein', label: t('input_protein')}, {key:'reducing', label: t('input_reducing')}];
+        const id = recipeSel.value;
+        if (id === 'dream_dust') inputs = [{key:'mush', label: t('input_mush')}, {key:'protein', label: t('input_protein')}];
+        else if (id === 'nightmare_dust') inputs = [{key:'mush', label: t('input_mush_nightmare')}, {key:'protein', label: t('input_protein')}];
+        else if (id === 'caffeine_pill') inputs = [{key:'mush', label: t('input_mush_coffee')}, {key:'protein', label: t('input_protein_coffee')}, {key:'fat', label: t('input_fat')}];
+        else if (id === 'phanta_pill') inputs = [{key:'methylol', label: t('input_methylol')}, {key:'stab', label: t('input_stab')}];
+        else if (id === 'nomore_injector') inputs = [{key:'mush', label: t('input_mush')}, {key:'protein', label: t('input_protein')}, {key:'reducing', label: t('input_reducing')}];
 
         inputs.forEach(inp => {
             const card = document.createElement('div');
@@ -290,35 +295,36 @@
             </div>`;
 
         if (id === 'dream_dust' || id === 'nightmare_dust') {
-            const isNight = id === 'nightmare_dust';
+            const descEvap = id === 'nightmare_dust' ? t('desc_evap_nightmare') : t('desc_evap_dream');
+            const descMush = id === 'nightmare_dust' ? t('desc_nightmare') : t('desc_mush');
             html = `
-                <div class="step"><div class="stitle">${t('step_blender')}</div><div class="desc">Mushroom paste.</div></div>
-                <div class="step"><div class="stitle">${t('step_extraction')}</div><div class="desc">Add alcohol, heat to 40-49°C.</div><div class="line"><span>Alcohol</span><span class="amt" id="amt-alc">0 ml</span></div></div>
-                <div class="step"><div class="stitle">${t('step_cleaning')}</div><div class="desc">Acid/Base 1:1 to protein.</div><div class="line"><span>Acid/Base</span><span class="amt" id="amt-prot">0 ml</span></div></div>
-                <div class="step"><div class="stitle">${t('step_filtering')}</div><div class="desc">Cotton Cloth → Water Filter.</div></div>
-                <div class="step"><div class="stitle">${t('step_evap_pack')}</div><div class="desc">Evaporate. Every <b>${isNight ? 4 : 2} ml</b> extract = 1 vial.</div>${purityBlock}</div>`;
+                <div class="step"><div class="stitle">${t('step_blender')}</div><div class="desc">${descMush}</div></div>
+                <div class="step"><div class="stitle">${t('step_extraction')}</div><div class="desc">${t('desc_extraction')}</div><div class="line"><span>Alcohol</span><span class="amt" id="amt-alc">0 ml</span></div></div>
+                <div class="step"><div class="stitle">${t('step_cleaning')}</div><div class="desc">${t('desc_cleaning')}</div><div class="line"><span>Acid/Base</span><span class="amt" id="amt-prot">0 ml</span></div></div>
+                <div class="step"><div class="stitle">${t('step_filtering')}</div><div class="desc">${t('desc_filtering')}</div></div>
+                <div class="step"><div class="stitle">${t('step_evap_pack')}</div><div class="desc">${descEvap}</div>${purityBlock}</div>`;
         } else if (id === 'caffeine_pill') {
             html = `
-                <div class="step"><div class="stitle">${t('step_blender')}</div><div class="desc">Coffee beans.</div></div>
-                <div class="step"><div class="stitle">${t('step_agent')} (Before heating)</div><div class="desc">Lipobond ⅛ of fat.</div><div class="line"><span>Agent</span><span class="amt" id="amt-fat">0 ml</span></div></div>
-                <div class="step"><div class="stitle">${t('step_extraction')}</div><div class="desc">Alcohol 0.75x. Heat 50-78°C.</div><div class="line"><span>Alcohol</span><span class="amt" id="amt-alc">0 ml</span></div></div>
-                <div class="step"><div class="stitle">${t('step_cleaning')}</div><div class="desc">Acid/Base 1:1 to protein.</div><div class="line"><span>Acid/Base</span><span class="amt" id="amt-prot">0 ml</span></div></div>
-                <div class="step"><div class="stitle">${t('step_evap_pack')}</div><div class="desc">Evaporate. Every <b>5 ml</b> caffeine = 1 pill.</div>${purityBlock}</div>`;
+                <div class="step"><div class="stitle">${t('step_blender')}</div><div class="desc">${t('desc_coffee')}</div></div>
+                <div class="step"><div class="stitle">${t('step_agent')}</div><div class="desc">${t('desc_agent_coffee')}</div><div class="line"><span>Agent</span><span class="amt" id="amt-fat">0 ml</span></div></div>
+                <div class="step"><div class="stitle">${t('step_extraction')}</div><div class="desc">${t('desc_extract_coffee')}</div><div class="line"><span>Alcohol</span><span class="amt" id="amt-alc">0 ml</span></div></div>
+                <div class="step"><div class="stitle">${t('step_cleaning')}</div><div class="desc">${t('desc_clean_coffee')}</div><div class="line"><span>Acid/Base</span><span class="amt" id="amt-prot">0 ml</span></div></div>
+                <div class="step"><div class="stitle">${t('step_evap_pack')}</div><div class="desc">${t('desc_evap_coffee')}</div>${purityBlock}</div>`;
         } else if (id === 'phanta_pill') {
             html = `
-                <div class="step"><div class="stitle">${t('step_remove_stab')}</div><div class="desc">Acid until Stabilizing Agent = 0.</div><div class="line"><span>Acid</span><span class="amt" id="amt-stab">0 ml</span></div></div>
-                <div class="step"><div class="stitle">${t('step_filter_neutral')}</div><div class="desc">Filter debris. Add base to neutralize.</div></div>
-                <div class="step"><div class="stitle">${t('step_reduction')}</div><div class="desc">Reducing Agent ¾ of methylol.</div><div class="line"><span>Reducing Agent</span><span class="amt" id="amt-red">0 ml</span></div></div>
-                <div class="step"><div class="stitle">${t('step_heating')}</div><div class="desc">120-129°C until methylol = 0.</div></div>
-                <div class="step"><div class="stitle">${t('step_evap_pack')}</div><div class="desc">Water + Purification Tablet. Every <b>5 ml</b> methylol = 1 pill.</div>${purityBlock}</div>`;
+                <div class="step"><div class="stitle">${t('step_remove_stab')}</div><div class="desc">${t('desc_stab_phanta')}</div><div class="line"><span>Acid</span><span class="amt" id="amt-stab">0 ml</span></div></div>
+                <div class="step"><div class="stitle">${t('step_filter_neutral')}</div><div class="desc">${t('desc_filter_phanta')}</div></div>
+                <div class="step"><div class="stitle">${t('step_reduction')}</div><div class="desc">${t('desc_red_phanta')}</div><div class="line"><span>Reducing Agent</span><span class="amt" id="amt-red">0 ml</span></div></div>
+                <div class="step"><div class="stitle">${t('step_heating')}</div><div class="desc">${t('desc_heat_phanta')}</div></div>
+                <div class="step"><div class="stitle">${t('step_evap_pack')}</div><div class="desc">${t('desc_evap_phanta')}</div>${purityBlock}</div>`;
         } else if (id === 'nomore_injector') {
             html = `
-                <div class="step"><div class="stitle">${t('step_extract_nomore')}</div><div class="desc">Alcohol + paste, heat 40-49°C.</div><div class="line"><span>Alcohol</span><span class="amt" id="amt-alc">0 ml</span></div></div>
-                <div class="step"><div class="stitle">${t('step_mix_nomore')}</div><div class="desc">Remove protein. Evaporate dry.</div><div class="line"><span>Acid/Base</span><span class="amt" id="amt-prot">0 ml</span></div>${purityBlock}</div>
-                <div class="step"><div class="stitle">${t('step_mix')}</div><div class="desc">Reducing Agent 1:1 to extract.</div><div class="line"><span>Extract</span><span class="amt" id="amt-ext">0 ml</span></div><div class="line"><span>Reducing Agent</span><span class="amt" id="amt-red">0 ml</span></div></div>
-                <div class="step"><div class="stitle">${t('step_agent')}</div><div class="desc">Lipobond ⅓ of extract.</div><div class="line"><span>Agent</span><span class="amt" id="amt-agent">0 ml</span></div></div>
-                <div class="step"><div class="stitle">${t('step_reaction')}</div><div class="desc">50-55°C until extract = 0.</div></div>
-                <div class="step"><div class="stitle">${t('step_filtering')}</div><div class="desc">Cotton Cloth. 60% extract = Nomore.</div></div>`;
+                <div class="step"><div class="stitle">${t('step_extract_nomore')}</div><div class="desc">${t('desc_extract_nomore')}</div><div class="line"><span>Alcohol</span><span class="amt" id="amt-alc">0 ml</span></div></div>
+                <div class="step"><div class="stitle">${t('step_mix_nomore')}</div><div class="desc">${t('desc_clean_nomore')}</div><div class="line"><span>Acid/Base</span><span class="amt" id="amt-prot">0 ml</span></div>${purityBlock}</div>
+                <div class="step"><div class="stitle">${t('step_mix')}</div><div class="desc">${t('desc_mix_nomore')}</div><div class="line"><span>Extract</span><span class="amt" id="amt-ext">0 ml</span></div><div class="line"><span>Reducing Agent</span><span class="amt" id="amt-red">0 ml</span></div></div>
+                <div class="step"><div class="stitle">${t('step_agent')}</div><div class="desc">${t('desc_agent_nomore')}</div><div class="line"><span>Agent</span><span class="amt" id="amt-agent">0 ml</span></div></div>
+                <div class="step"><div class="stitle">${t('step_reaction')}</div><div class="desc">${t('desc_react_nomore')}</div></div>
+                <div class="step"><div class="stitle">${t('step_filtering')}</div><div class="desc">${t('desc_filter_nomore')}</div></div>`;
         }
         stepsEl.innerHTML = html;
     }
@@ -331,7 +337,6 @@
     function updateAll() {
         const id = recipeSel.value;
         const r = RECIPES[id];
-        r.name = id;
         
         const hasCartel = (id === 'dream_dust' || id === 'nomore_injector');
         if (hasCartel) {
@@ -385,7 +390,7 @@
                 const lostAmount = rawPaste * lossPct;
                 const usablePaste = rawPaste - lostAmount;
                 totalExtract = usablePaste * r.extractYield;
-                pipelineBox.innerHTML = `<b>⚙️ Pipeline:</b><br>1. Paste: <b>${fmt(rawPaste)} ml</b><br>2. Blender (${bm} mod) loses ${(lossPct * 100)}%: <b style="color:#f87171">−${fmt(lostAmount)} ml</b><br>3. Left: <b>${fmt(usablePaste)} ml</b><br>4. Pure Extract (${r.extractYield * 100}%): <b style="color:#a0d6a0">${fmt(totalExtract)} ml</b>`;
+                pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_paste')} <b>${fmt(rawPaste)} ml</b><br>${t('pipe_blender_lost')} (${bm} mod) loses ${(lossPct * 100)}%: <b style="color:#f87171">−${fmt(lostAmount)} ml</b><br>${t('pipe_left')} <b>${fmt(usablePaste)} ml</b><br>${t('pipe_extract')} (${r.extractYield * 100}%): <b style="color:#a0d6a0">${fmt(totalExtract)} ml</b>`;
             }
         } else if (id === 'nomore_injector') {
             const rawPaste = inputs.mush;
@@ -416,7 +421,7 @@
                         warnEl.innerHTML = '';
                     }
                     totalExtract = effectiveExtract * 0.6;
-                    pipelineBox.innerHTML = `<b>⚙️ Pipeline:</b><br>1. Paste: <b>${fmt(rawPaste)} ml</b><br>2. Blender (${bm} mod) loses ${(lossPct * 100)}%: <b style="color:#f87171">−${fmt(lostAmount)} ml</b><br>3. Left: <b>${fmt(usablePaste)} ml</b><br>4. Dream Extract (50%): <b style="color:#7bc8f2">${fmt(dreamExtractTotal)} ml</b><br>${hasCartel ? `5. For Cartel (raw extract): <b style="color:#f0b36a">${fmt(extractForCartel)} ml</b><br>` : ''}6. Left for Nomore: <b style="color:#a0d6a0">${fmt(extractForNomore)} ml</b><br>7. Nomore (60%): <b style="color:#a0d6a0">${fmt(totalExtract)} ml</b>`;
+                    pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_paste')} <b>${fmt(rawPaste)} ml</b><br>${t('pipe_blender_lost')} (${bm} mod) loses ${(lossPct * 100)}%: <b style="color:#f87171">−${fmt(lostAmount)} ml</b><br>${t('pipe_left')} <b>${fmt(usablePaste)} ml</b><br>${t('pipe_dream_extract')} <b style="color:#7bc8f2">${fmt(dreamExtractTotal)} ml</b><br>${hasCartel ? `${t('pipe_for_cartel')} <b style="color:#f0b36a">${fmt(extractForCartel)} ml</b><br>` : ''}${t('pipe_left_nomore')} <b style="color:#a0d6a0">${fmt(extractForNomore)} ml</b><br>${t('pipe_nomore')} <b style="color:#a0d6a0">${fmt(totalExtract)} ml</b>`;
                 }
             }
         } else if (id === 'phanta_pill') {
@@ -429,7 +434,7 @@
                 totalExtract = methylol * r.extractYield;
                 warnEl.innerHTML = '';
             }
-            pipelineBox.innerHTML = `<b>⚙️ Pipeline:</b><br>1. Methylol: <b>${fmt(methylol)} ml</b><br>2. Output (10%): <b style="color:${isCraftable ? '#a0d6a0' : '#f87171'}">${fmt(totalExtract)} ml</b>`;
+            pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>1. Methylol: <b>${fmt(methylol)} ml</b><br>2. Output (10%): <b style="color:${isCraftable ? '#a0d6a0' : '#f87171'}">${fmt(totalExtract)} ml</b>`;
         }
 
         if (errorMsg) {
@@ -479,7 +484,7 @@
         outputBox.innerHTML = `
             <div style="font-size:.85rem;color:#cbd8e6;margin-bottom:6px">${t('total_output')}</div>
             <div class="line" style="padding:0 0 2px 0"><span>${t('ready_product')}</span><span class="amt" style="color:${isCraftable ? '#a0d6a0' : '#f87171'}">${fmt(totalExtract)} ml</span></div>
-            <div class="line" style="padding:0"><span>${t('ready_units')}</span><span class="amt" style="color:${isCraftable ? '#a0d6a0' : '#f87171'};font-size:1.1rem">${totalItems} ${r.unit}</span></div>
+            <div class="line" style="padding:0"><span>${t('ready_units')}</span><span class="amt" style="color:${isCraftable ? '#a0d6a0' : '#f87171'};font-size:1.1rem">${totalItems} ${t(r.unitKey)}</span></div>
             ${leftoverPure > 0.1 ? `<div style="font-size:.7rem;color:#6e8aa5;margin-top:2px">${t('leftover')} ${fmt(leftoverPure)} ${t('leftover_ml')}</div>` : ''}
         `;
 
@@ -650,13 +655,11 @@
     }
 
     function updateLanguage() {
-        // Update static text
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
             el.innerHTML = t(key);
         });
         
-        // Update dynamic components
         const r = RECIPES[recipeSel.value];
         renderMods(r);
         renderScannerInputs(r);
