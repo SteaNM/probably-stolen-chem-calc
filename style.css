@@ -39,7 +39,18 @@ select:focus,input:focus{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,2
 .line{display:flex;justify-content:space-between;align-items:flex-start;padding:2px 0 2px 8px;font-size:.85rem}
 .amt{font-weight:700;color:#7bc8f2;font-variant-numeric:tabular-nums;text-align:right;display:flex;flex-direction:column;align-items:flex-end}
 .note{font-size:.7rem;color:#6e8aa5;margin-left:6px}
-.pill-text{font-size:.75rem;color:#f0b36a;background:#2a1e12;padding:4px 8px;border-radius:4px;margin-top:4px;font-weight:normal;border:1px solid #4a3622;display:inline-block;text-align:left;line-height:1.4}
+.pill-text{
+    font-size:.75rem;
+    background:#141b22;
+    padding:4px 8px;
+    border-radius:4px;
+    margin-top:4px;
+    font-weight:normal;
+    border:1px solid #25323e;
+    display:inline-block;
+    text-align:left;
+    line-height:1.4;
+}
 .purity-input{width:70px;padding:4px 6px;font-size:15px;background:#141b22;border:1px solid #3b82f6;color:#7bc8f2;border-radius:4px;text-align:center;outline:none;font-family:inherit;font-weight:700}
 .purity-input:focus{border-color:#a0d6a0;box-shadow:0 0 4px rgba(160,214,160,0.4)}
 .output-box{background:#1e2a35;border-radius:8px;padding:12px;border-left:3px solid #a0d6a0;margin-bottom:12px}
