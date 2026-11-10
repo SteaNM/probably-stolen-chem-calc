@@ -41,13 +41,13 @@ export function getMeasurementHtml(amount) {
     if (c01 > 0) pills.push(`${c01}×${t('pill_birth')}`);
     
     let res = '';
-    if (beakers.length > 0) res += `<span style="color:#a0d6a0">${t('beakers')}</span> ${beakers.join(' + ')}`;
+    if (beakers.length > 0) res += `<span style="color:#a0d6a0">${t('beakers')}</span> <span style="color:#a0d6a0">${beakers.join(' + ')}</span>`;
     if (pills.length > 0) {
         if (res) res += ` <span style="color:#4a3622">|</span> `;
-        res += `<span style="color:#f0b36a">${t('pills')}</span> ${pills.join(' + ')}`;
+        res += `<span style="color:#a0d6a0">${t('pills')}</span> <span style="color:#a0d6a0">${pills.join(' + ')}</span>`;
     }
     if (!res) return '';
-    return `<span class="pill-text">${res}</span>`;
+    return `<span class="pill-text" style="color:#a0d6a0; border-color:#2a4532; background:#122118;">${res}</span>`;
 }
 
 export function getGrade(p) {
