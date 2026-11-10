@@ -16,8 +16,8 @@
             <div class="sub" data-i18n="sub">Калькулятор химика</div>
         </div>
         <select class="lang-switch" id="langSwitch">
-            <option value="ru">RU</option>
-            <option value="en">EN</option>
+            <option value="ru">🇷🇺 RU</option>
+            <option value="en">🇬🇧 EN</option>
         </select>
     </div>
     
@@ -136,7 +136,13 @@
 
 <script>
     let currentLang = 'ru';
-    const t = (key) => TRANSLATIONS[currentLang][key] || key;
+    const t = (key, params = {}) => {
+        let str = TRANSLATIONS[currentLang][key] || key;
+        for (const [k, v] of Object.entries(params)) {
+            str = str.replace(new RegExp(`{${k}}`, 'g'), v);
+        }
+        return str;
+    };
 
     const RECIPES = {
         dream_dust: { outputMl: 2, unitKey: 'unit_vials', isBlendable: true, extractYield: 0.5, alcoholRatio: 5, baseValue: 18, contrabandMarkup: 0.70 },
@@ -481,9 +487,9 @@
 
         outputBox.innerHTML = `
             <div style="font-size:.85rem;color:#cbd8e6;margin-bottom:6px">${t('total_output')}</div>
-            <div class="line" style="padding:0 0 2px 0"><span>${t('ready_product')}</span><span class="amt" style="color:${isCraftable ? '#a0d6a0' : '#f87171'}">${fmt(totalExtract)} ml</span></div>
+            <div class="line" style="padding:0 0 2px 0"><span>${t('ready_product')}</span><span class="amt" style="color:${isCraftable ? '#a0d6a0' : '#f87171'}">${fmt(totalExtract)} ${t('label_ml')}</span></div>
             <div class="line" style="padding:0"><span>${t('ready_units')}</span><span class="amt" style="color:${isCraftable ? '#a0d6a0' : '#f87171'};font-size:1.1rem">${totalItems} ${t(r.unitKey)}</span></div>
-            ${leftoverPure > 0.1 ? `<div style="font-size:.7rem;color:#6e8aa5;margin-top:2px">${t('leftover')} ${fmt(leftoverPure)} ${t('leftover_ml')}</div>` : ''}
+            ${leftoverPure > 0.1 ? `<div style="font-size:.7rem;color:#6e8aa5;margin-top:2px">${t('leftover_text', {amount: fmt(leftoverPure)})}</div>` : ''}
         `;
 
         let revenueHTML = '';
@@ -502,22 +508,22 @@
             revenueHTML = `
                 <div class="sale-box">
                     <div style="font-size:.85rem;color:#cbd8e6;font-weight:600;margin-bottom:6px">${t('price_per_item')}</div>
-                    <div class="sale-line"><span>${t('base_price')}</span><span>${base} cr.</span></div>
-                    <div class="sale-line"><span>${t('quality_bonus')} (+${(g.m * 100).toFixed(0)}%)</span><span style="color:#7bc8f2">+${qualityBonus.toFixed(1)} cr.</span></div>
-                    ${r.contrabandMarkup > 0 ? `<div class="sale-line"><span>${t('contraband_bonus')} (+${(r.contrabandMarkup * 100).toFixed(0)}%)</span><span style="color:#f0b36a">+${contrabandBonus.toFixed(1)} cr.</span></div>` : ''}
-                    ${diffConfig.markup > 1 ? `<div class="sale-line"><span>${t('difficulty_bonus')} (x${diffConfig.markup})</span><span style="color:#a0d6a0">+${diffBonus.toFixed(1)} cr.</span></div>` : ''}
-                    <div class="sale-total"><span>${t('total_price')}</span><span>~${pricePerItem} cr.</span></div>
-                    <div class="sale-line" style="margin-top:4px;font-size:.9rem;color:#e8edf2;font-weight:600"><span>${t('revenue')} (${totalItems} pcs.)</span><span style="color:#a0d6a0">~${totalRevenue} cr.</span></div>
+                    <div class="sale-line"><span>${t('base_price')}</span><span>${base} ${t('currency')}</span></div>
+                    <div class="sale-line"><span>${t('quality_bonus')} (+${(g.m * 100).toFixed(0)}%)</span><span style="color:#7bc8f2">+${qualityBonus.toFixed(1)} ${t('currency')}</span></div>
+                    ${r.contrabandMarkup > 0 ? `<div class="sale-line"><span>${t('contraband_bonus')} (+${(r.contrabandMarkup * 100).toFixed(0)}%)</span><span style="color:#f0b36a">+${contrabandBonus.toFixed(1)} ${t('currency')}</span></div>` : ''}
+                    ${diffConfig.markup > 1 ? `<div class="sale-line"><span>${t('difficulty_bonus')} (x${diffConfig.markup})</span><span style="color:#a0d6a0">+${diffBonus.toFixed(1)} ${t('currency')}</span></div>` : ''}
+                    <div class="sale-total"><span>${t('total_price')}</span><span>~${pricePerItem} ${t('currency')}</span></div>
+                    <div class="sale-line" style="margin-top:4px;font-size:.9rem;color:#e8edf2;font-weight:600"><span>${t('revenue_text', {amount: totalItems})}</span><span style="color:#a0d6a0">~${totalRevenue} ${t('currency')}</span></div>
                 </div>
                 <div class="cost-box" style="margin-bottom:8px">
                     <div style="font-size:.85rem;color:#cbd8e6;font-weight:600;margin-bottom:4px">${t('costs_breakdown')}</div>
-                    ${id !== 'phanta_pill' ? `<div class="cost-line"><span>${t('cost_mushrooms')}</span><span class="amt" style="color:${actualMushCost > 0 ? '#f87171' : '#a0d6a0'}">${actualMushCost > 0 ? `−${actualMushCost.toFixed(1)} cr.` : '0 cr.'}</span></div>` : ''}
-                    <div class="cost-line"><span>${t('cost_chem_packs')} (${chemCountUsed} pcs.)</span><span class="amt" style="color:${actualChemCost > 0 ? '#f87171' : '#a0d6a0'}">${actualChemCost > 0 ? `−${actualChemCost.toFixed(1)} cr.` : '0 cr.'}</span></div>
-                    <div class="cost-line"><span>${t('cost_restricted_packs')} (${restrictedCountUsed} pcs.)</span><span class="amt" style="color:${actualRestrictedCost > 0 ? '#f87171' : '#a0d6a0'}">${actualRestrictedCost > 0 ? `−${actualRestrictedCost.toFixed(1)} cr.` : '0 cr.'}</span></div>
-                    <div class="cost-line" style="border-top:1px solid #25323e;padding-top:4px;margin-top:4px"><span><b>${t('total_costs')}</b></span><span class="amt" style="color:#f87171">−${totalCost.toFixed(1)} cr.</span></div>
+                    ${id !== 'phanta_pill' ? `<div class="cost-line"><span>${t('cost_mushrooms')}</span><span class="amt" style="color:${actualMushCost > 0 ? '#f87171' : '#a0d6a0'}">${actualMushCost > 0 ? `−${actualMushCost.toFixed(1)} ${t('currency')}` : `0 ${t('currency')}`}</span></div>` : ''}
+                    <div class="cost-line"><span>${t('cost_chem_packs')} (${chemCountUsed} ${t('unit_pcs')})</span><span class="amt" style="color:${actualChemCost > 0 ? '#f87171' : '#a0d6a0'}">${actualChemCost > 0 ? `−${actualChemCost.toFixed(1)} ${t('currency')}` : `0 ${t('currency')}`}</span></div>
+                    <div class="cost-line"><span>${t('cost_restricted_packs')} (${restrictedCountUsed} ${t('unit_pcs')})</span><span class="amt" style="color:${actualRestrictedCost > 0 ? '#f87171' : '#a0d6a0'}">${actualRestrictedCost > 0 ? `−${actualRestrictedCost.toFixed(1)} ${t('currency')}` : `0 ${t('currency')}`}</span></div>
+                    <div class="cost-line" style="border-top:1px solid #25323e;padding-top:4px;margin-top:4px"><span><b>${t('total_costs')}</b></span><span class="amt" style="color:#f87171">−${totalCost.toFixed(1)} ${t('currency')}</span></div>
                 </div>
                 <div class="profit-box">
-                    <div class="profit-line" style="font-size:.9rem;font-weight:600;color:#e8edf2"><span>${t('profit')}</span><span class="amt" style="color:${netProfit >= 0 ? '#a0d6a0' : '#f87171'}">~${netProfit.toFixed(1)} cr.</span></div>
+                    <div class="profit-line" style="font-size:.9rem;font-weight:600;color:#e8edf2"><span>${t('profit')}</span><span class="amt" style="color:${netProfit >= 0 ? '#a0d6a0' : '#f87171'}">~${netProfit.toFixed(1)} ${t('currency')}</span></div>
                 </div>
             `;
         }
@@ -528,7 +534,7 @@
             const sugar = parseFloat(scanSugar.value) || 0;
             const totalRawFiller = starch + sugar;
             const usableFiller = totalRawFiller * (1 - lossPct);
-            fillerInfo.innerHTML = `📥 <b>${t('cartel_filler')}:</b> ${fmt(totalRawFiller)} ml → after blender: <b style="color:#f0b36a">${fmt(usableFiller)} ml</b>`;
+            fillerInfo.innerHTML = `📥 <b>${t('cartel_filler')}:</b> ${fmt(totalRawFiller)} ${t('label_ml')} → ${t('after_blender')}: <b style="color:#f0b36a">${fmt(usableFiller)} ${t('label_ml')}</b>`;
             
             const reqStr = cartelWeek.value.split(',');
             const reqVials = parseInt(reqStr[0]);
@@ -540,20 +546,20 @@
 
             if (id === 'dream_dust') {
                 if (totalExtract <= 0) {
-                    cartelResult.innerHTML = `<div class="warn">No extract.</div>`;
+                    cartelResult.innerHTML = `<div class="warn">${t('error_no_extract')}</div>`;
                 } else if (purePurity <= targetPurity) {
-                    cartelResult.innerHTML = `<div class="warn">⚠️ Extract (${purePurity.toFixed(0)}%) below requirement (${targetPurity}%).</div>`;
+                    cartelResult.innerHTML = `<div class="warn">⚠️ ${purePurity.toFixed(0)}% < ${targetPurity}%</div>`;
                 } else {
                     const totalMixNeeded = reqVials * r.outputMl;
                     const extractForCartel = (targetPurity / purePurity) * totalMixNeeded;
                     const fillerNeeded = totalMixNeeded - extractForCartel;
                     
                     if (extractForCartel > totalExtract) {
-                        cartelResult.innerHTML = `<div class="warn" style="border-color:#f87171">${t('cartel_not_enough_extract')}<br>Need ${fmt(extractForCartel)} ml, have ${fmt(totalExtract)} ml.</div>`;
+                        cartelResult.innerHTML = `<div class="warn" style="border-color:#f87171">${t('cartel_not_enough_extract')}</div>`;
                     } else {
                         let fillerStatus = usableFiller >= fillerNeeded
-                            ? `<span style="color:#a0d6a0">${t('cartel_enough_filler')} ${fmt(usableFiller - fillerNeeded)} ml).</span>`
-                            : `<span style="color:#f87171">${t('cartel_not_enough_filler')} ${fmt(fillerNeeded - usableFiller)} ml.</span>`;
+                            ? `<span style="color:#a0d6a0">${t('cartel_filler_status_ok', {amount: fmt(usableFiller - fillerNeeded)})}</span>`
+                            : `<span style="color:#f87171">${t('cartel_filler_status_bad', {amount: fmt(fillerNeeded - usableFiller)})}</span>`;
                         
                         const remainingExtract = totalExtract - extractForCartel;
                         const saleItems = Math.floor(remainingExtract / r.outputMl);
@@ -564,46 +570,46 @@
                         
                         const actualRep = calcReputation(reqPurity, targetPurity, diffKey);
                         let repColor = actualRep > 10 ? '#7bc8f2' : '#a0d6a0';
-                        let repDesc = actualRep > 10 ? '(Threshold +10 exceeded)' : '(Max bonus)';
+                        let repDesc = actualRep > 10 ? t('cartel_rep_threshold') : t('cartel_rep_max');
                         const baseStipend = 150;
                         const stipendWithPerk = 150 + (4 * reputation);
                         const mixPurity = targetPurity / (1 - FINISHER_IMP[Math.min(fm, 4)]);
                         
                         cartelResult.innerHTML = `
-                            <div style="font-size:.85rem;color:#cbd8e6;margin-bottom:8px">Turn in <b>${reqVials} vials</b> at <b>${targetPurity}%</b>:</div>
+                            <div style="font-size:.85rem;color:#cbd8e6;margin-bottom:8px">${t('cartel_turn_in_text', {vials: reqVials, purity: targetPurity})}</div>
                             <div style="background:#1e2a35;border-radius:6px;margin-bottom:8px;padding:8px">
                                 <div style="font-size:.8rem;color:#a0d6a0;font-weight:600;margin-bottom:2px">${t('cartel_leave_sell')}</div>
-                                <div class="line" style="padding:0"><span>Extract</span><span class="amt" style="color:#a0d6a0">${fmt(remainingExtract)} ml</span></div>
-                                <div class="line" style="padding:0"><span>Vials</span><span class="amt" style="color:#a0d6a0">${saleItems} pcs.</span></div>
-                                ${saleLeftovers > 0.1 ? `<div style="font-size:.7rem;color:#6e8aa5;margin-top:2px">(and ${fmt(saleLeftovers)} ml leftover)</div>` : ''}
+                                <div class="line" style="padding:0"><span>${t('cartel_extract')}</span><span class="amt" style="color:#a0d6a0">${t('cartel_extract_amount_text', {amount: fmt(remainingExtract)})}</span></div>
+                                <div class="line" style="padding:0"><span>${t('cartel_vials_label')}</span><span class="amt" style="color:#a0d6a0">${t('cartel_sale_items_text', {amount: saleItems})}</span></div>
+                                ${saleLeftovers > 0.1 ? `<div style="font-size:.7rem;color:#6e8aa5;margin-top:2px">${t('leftover_text', {amount: fmt(saleLeftovers)})}</div>` : ''}
                             </div>
                             <div style="background:#1e2a35;border-radius:6px;padding:8px;margin-bottom:8px">
                                 <div style="font-size:.8rem;color:#f0b36a;font-weight:600;margin-bottom:2px">${t('cartel_for_cartel')}</div>
-                                <div class="line" style="padding:0"><span>${t('cartel_extract')}</span><span class="amt" style="color:#a0d6a0">${fmt(extractForCartel)} ml</span></div>
-                                <div class="line" style="padding:0"><span>${t('cartel_filler_amount')}</span><span class="amt" style="color:#f0b36a">${fmt(fillerNeeded)} ml</span></div>
+                                <div class="line" style="padding:0"><span>${t('cartel_extract')}</span><span class="amt" style="color:#a0d6a0">${t('cartel_extract_amount_text', {amount: fmt(extractForCartel)})}</span></div>
+                                <div class="line" style="padding:0"><span>${t('cartel_filler_amount')}</span><span class="amt" style="color:#f0b36a">${t('cartel_extract_amount_text', {amount: fmt(fillerNeeded)})}</span></div>
                                 <div class="line" style="padding:0;margin-top:4px;border-top:1px solid #25323e;padding-top:4px"><span>${t('cartel_mix_purity')}</span><span class="amt" style="color:#7bc8f2">${mixPurity.toFixed(1)}%</span></div>
                                 <div class="line" style="padding:0"><span>${t('cartel_final_purity')}</span><span class="amt" style="color:#a0d6a0">${targetPurity}%</span></div>
                                 <div style="font-size:.75rem;margin-top:4px">${fillerStatus}</div>
                             </div>
                             <div class="rep-box" style="border-left-color:#f0b36a;background:#1c1f26;padding:6px;margin-top:4px">
-                                <div style="font-size:.8rem;color:#cbd8e6;font-weight:600">${t('cartel_stipend')} <span style="color:#f0b36a">~${stipendWithPerk} cr.</span></div>
-                                <div style="font-size:.7rem;color:#8b9eb0">(Base 150 + 4 × ${reputation} rep.)</div>
+                                <div style="font-size:.8rem;color:#cbd8e6;font-weight:600">${t('cartel_stipend')} <span style="color:#f0b36a">~${stipendWithPerk} ${t('currency')}</span></div>
+                                <div style="font-size:.7rem;color:#8b9eb0">${t('cartel_stipend_base', {rep: reputation})}</div>
                             </div>
                             <div class="rep-box" style="padding:6px;margin-top:6px">
                                 <div style="font-size:.8rem;color:#cbd8e6;font-weight:600">${t('cartel_rep_bonus')} <span style="color:${repColor}">+${actualRep} pts</span></div>
                                 <div style="font-size:.7rem;color:#8b9eb0">${repDesc}</div>
                             </div>
                             <div style="font-size:.75rem;color:#8b9eb0;margin-top:8px;background:#1a232e;padding:6px;border-radius:6px">
-                                ${t('cartel_paste_usage')} ${t('cartel_for')} — ${fmt(rawMushForCartel)} ml, ${t('cartel_sell')} — ${fmt(rawMushRemaining)} ml.
+                                ${t('cartel_paste_usage_text', {cartel: fmt(rawMushForCartel), sell: fmt(rawMushRemaining)})}
                             </div>
                         `;
                     }
                 }
             } else if (id === 'nomore_injector') {
                 if (dreamExtractTotal <= 0) {
-                    cartelResult.innerHTML = `<div class="warn">No extract.</div>`;
+                    cartelResult.innerHTML = `<div class="warn">${t('error_no_extract')}</div>`;
                 } else if (extractForCartel > dreamExtractTotal) {
-                    cartelResult.innerHTML = `<div class="warn" style="border-color:#f87171">${t('cartel_not_enough_extract')}<br>Need ${fmt(extractForCartel)} ml, have ${fmt(dreamExtractTotal)} ml.</div>`;
+                    cartelResult.innerHTML = `<div class="warn" style="border-color:#f87171">${t('cartel_not_enough_extract')}</div>`;
                 } else {
                     const mixNeededForCartel = reqVials * 2;
                     const fillerNeeded = mixNeededForCartel - extractForCartel;
@@ -612,35 +618,35 @@
                     const saleItems = Math.floor(pureNomoreVolume / r.outputMl);
                     
                     let fillerStatus = usableFiller >= fillerNeeded
-                        ? `<span style="color:#a0d6a0">${t('cartel_enough_filler')} ${fmt(usableFiller - fillerNeeded)} ml).</span>`
-                        : `<span style="color:#f87171">${t('cartel_not_enough_filler')} ${fmt(fillerNeeded - usableFiller)} ml.</span>`;
+                        ? `<span style="color:#a0d6a0">${t('cartel_filler_status_ok', {amount: fmt(usableFiller - fillerNeeded)})}</span>`
+                        : `<span style="color:#f87171">${t('cartel_filler_status_bad', {amount: fmt(fillerNeeded - usableFiller)})}</span>`;
                     
                     const actualRep = calcReputation(reqPurity, targetPurity, diffKey);
                     let repColor = actualRep > 10 ? '#7bc8f2' : '#a0d6a0';
-                    let repDesc = actualRep > 10 ? '(Threshold +10 exceeded)' : '(Max bonus)';
+                    let repDesc = actualRep > 10 ? t('cartel_rep_threshold') : t('cartel_rep_max');
                     const baseStipend = 150;
                     const stipendWithPerk = 150 + (4 * reputation);
                     const mixPurity = targetPurity / (1 - FINISHER_IMP[Math.min(fm, 4)]);
                     
                     cartelResult.innerHTML = `
-                        <div style="font-size:.85rem;color:#cbd8e6;margin-bottom:8px">Turn in <b>${reqVials} vials</b> at <b>${targetPurity}%</b>:</div>
+                        <div style="font-size:.85rem;color:#cbd8e6;margin-bottom:8px">${t('cartel_turn_in_text', {vials: reqVials, purity: targetPurity})}</div>
                         <div style="background:#1e2a35;border-radius:6px;margin-bottom:8px;padding:8px">
                             <div style="font-size:.8rem;color:#a0d6a0;font-weight:600;margin-bottom:2px">${t('cartel_leave_nomore')}</div>
-                            <div class="line" style="padding:0"><span>${t('cartel_raw_extract')}</span><span class="amt" style="color:#a0d6a0">${fmt(extractForNomore)} ml</span></div>
-                            <div class="line" style="padding:0"><span>Product (60%)</span><span class="amt" style="color:#a0d6a0">${fmt(pureNomoreVolume)} ml</span></div>
-                            <div class="line" style="padding:0"><span>${t('cartel_injectors')}</span><span class="amt" style="color:#a0d6a0">${saleItems} pcs.</span></div>
+                            <div class="line" style="padding:0"><span>${t('cartel_raw_extract')}</span><span class="amt" style="color:#a0d6a0">${t('cartel_extract_amount_text', {amount: fmt(extractForNomore)})}</span></div>
+                            <div class="line" style="padding:0"><span>${t('cartel_product_60')}</span><span class="amt" style="color:#a0d6a0">${t('cartel_extract_amount_text', {amount: fmt(pureNomoreVolume)})}</span></div>
+                            <div class="line" style="padding:0"><span>${t('cartel_injectors')}</span><span class="amt" style="color:#a0d6a0">${t('cartel_sale_items_text', {amount: saleItems})}</span></div>
                         </div>
                         <div style="background:#1e2a35;border-radius:6px;padding:8px;margin-bottom:8px">
                             <div style="font-size:.8rem;color:#f0b36a;font-weight:600;margin-bottom:2px">${t('cartel_for_cartel')}</div>
-                            <div class="line" style="padding:0"><span>${t('cartel_raw_extract')}</span><span class="amt" style="color:#a0d6a0">${fmt(extractForCartel)} ml</span></div>
-                            <div class="line" style="padding:0"><span>${t('cartel_filler_amount')}</span><span class="amt" style="color:#f0b36a">${fmt(fillerNeeded)} ml</span></div>
+                            <div class="line" style="padding:0"><span>${t('cartel_raw_extract')}</span><span class="amt" style="color:#a0d6a0">${t('cartel_extract_amount_text', {amount: fmt(extractForCartel)})}</span></div>
+                            <div class="line" style="padding:0"><span>${t('cartel_filler_amount')}</span><span class="amt" style="color:#f0b36a">${t('cartel_extract_amount_text', {amount: fmt(fillerNeeded)})}</span></div>
                             <div class="line" style="padding:0;margin-top:4px;border-top:1px solid #25323e;padding-top:4px"><span>${t('cartel_mix_purity')}</span><span class="amt" style="color:#7bc8f2">${mixPurity.toFixed(1)}%</span></div>
                             <div class="line" style="padding:0"><span>${t('cartel_final_purity')}</span><span class="amt" style="color:#a0d6a0">${targetPurity}%</span></div>
                             <div style="font-size:.75rem;margin-top:4px">${fillerStatus}</div>
                         </div>
                         <div class="rep-box" style="border-left-color:#f0b36a;background:#1c1f26;padding:6px;margin-top:4px">
-                            <div style="font-size:.8rem;color:#cbd8e6;font-weight:600">${t('cartel_stipend')} <span style="color:#f0b36a">~${stipendWithPerk} cr.</span></div>
-                            <div style="font-size:.7rem;color:#8b9eb0">(Base 150 + 4 × ${reputation} rep.)</div>
+                            <div style="font-size:.8rem;color:#cbd8e6;font-weight:600">${t('cartel_stipend')} <span style="color:#f0b36a">~${stipendWithPerk} ${t('currency')}</span></div>
+                            <div style="font-size:.7rem;color:#8b9eb0">${t('cartel_stipend_base', {rep: reputation})}</div>
                         </div>
                         <div class="rep-box" style="padding:6px;margin-top:6px">
                             <div style="font-size:.8rem;color:#cbd8e6;font-weight:600">${t('cartel_rep_bonus')} <span style="color:${repColor}">+${actualRep} pts</span></div>

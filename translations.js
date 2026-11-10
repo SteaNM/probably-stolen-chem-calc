@@ -2,7 +2,7 @@ const TRANSLATIONS = {
     ru: {
         title: "Probably Stolen",
         sub: "Калькулятор химика",
-        lang: "Язык",
+        currency: "кр.",
         product: "Продукт",
         alcohol: "Тип алкоголя",
         alcohol_70: "Бутылка алкоголя (70%)",
@@ -49,8 +49,6 @@ const TRANSLATIONS = {
         total_output: "🎯 Общий выход:",
         ready_product: "Готовый продукт",
         ready_units: "Готовой продукции",
-        leftover: "(и",
-        leftover_ml: "мл остатка)",
         price_per_item: "💰 Цена за 1 шт.:",
         base_price: "База",
         quality_bonus: "За качество",
@@ -69,7 +67,6 @@ const TRANSLATIONS = {
         module_blender: "Блендер",
         module_heater: "Термоплита",
         module_packer: "Упаковщик",
-        // Grades
         grade_pure: "Чистое вещество",
         grade_pharma: "Фармацевтическая чистота",
         grade_near: "Аптечная чистота",
@@ -77,7 +74,6 @@ const TRANSLATIONS = {
         grade_cut: "Разведённое вещество",
         grade_junk: "Низкая чистота",
         grade_starch: "Почти крахмал",
-        // Warnings & Errors
         error_no_paste: "Введите количество пасты.",
         error_no_reducing: "Введите восстановитель.",
         error_no_methylol: "Введите метилол.",
@@ -86,23 +82,20 @@ const TRANSLATIONS = {
         warn_lack_reducing_2: "мл экстракта нужно",
         warn_lack_reducing_3: "мл. У вас только",
         warn_lack_reducing_4: "мл.",
-        // Pills
         pill_zyanide: "Таб. Зианида (0.6)",
         pill_phanta: "Таб. Фенты (0.5)",
         pill_birth: "Противозач. (0.1)",
         beakers: "Колбы:",
         pills: "Пилюли:",
-        // Recipes
         dream_dust: "Пыль снов (Dream Dust)",
         nightmare_dust: "Пыль кошмаров (Nightmare Dust)",
         caffeine_pill: "Таблетка кофеина (Caffeine Pill)",
         phanta_pill: "Таблетка Фенты (Phanta Pill)",
         nomore_injector: "Инъектор Оксинета (Nomore Injector)",
-        // Units
         unit_vials: "флаконов",
         unit_pills: "пилюль",
         unit_injectors: "инъекторов",
-        // Inputs
+        unit_pcs: "шт.",
         input_mush: "Всего пасты (мл)",
         input_mush_nightmare: "Паста из Кошмарника (мл)",
         input_mush_coffee: "Паста из кофейных зёрен (мл)",
@@ -112,7 +105,6 @@ const TRANSLATIONS = {
         input_protein_coffee: "Протеины (мл)",
         input_fat: "Жир или масло (мл)",
         input_reducing: "Восстановитель (мл)",
-        // Cartel Weeks
         week_1: "Неделя 1: 10 флаконов, 40%",
         week_2: "Неделя 2: 15 флаконов, 45%",
         week_3: "Неделя 3: 20 флаконов, 50%",
@@ -120,7 +112,6 @@ const TRANSLATIONS = {
         week_5: "Неделя 5: 30 флаконов, 60%",
         week_6: "Неделя 6: 35 флаконов, 65%",
         week_7: "Неделя 7+: 40 флаконов, 70%",
-        // Steps
         step_blender: "1. Блендер",
         step_extraction: "2. Экстракция",
         step_heating: "3. Нагрев",
@@ -158,7 +149,6 @@ const TRANSLATIONS = {
         desc_agent_nomore: "Добавьте Жиросвязывающий агент (⅓ от экстракта).",
         desc_react_nomore: "Нагревайте до 50–55°C, пока экстракт не станет 0. Выше 55°C реакция остановится.",
         desc_filter_nomore: "Профильтруйте через Коттоновую ткань. 60% экстракта = Оксинет. 6.7 мл экстракта = 1 инъектор.",
-        // Pipeline
         pipe_title: "⚙️ Конвейер:",
         pipe_paste: "1. Паста:",
         pipe_blender_lost: "2. Блендер",
@@ -173,18 +163,30 @@ const TRANSLATIONS = {
         pipe_mod: "мод.",
         pipe_loses: "теряет",
         pipe_ml: "мл",
-        // Labels
         label_alcohol: "Алкоголь",
         label_acid_base: "Кислота/Щёлочь",
         label_agent: "Агент",
         label_extract: "Экстракт снов",
         label_reducing: "Восстановитель",
-        label_ml: "мл"
+        label_ml: "мл",
+        after_blender: "после блендера",
+        leftover_text: "(и {amount} мл остатка)",
+        revenue_text: "Выручка ({amount} шт.)",
+        cartel_turn_in_text: "Сдать {vials} флаконов с чистотой {purity}%:",
+        cartel_sale_items_text: "{amount} шт.",
+        cartel_extract_amount_text: "{amount} мл",
+        cartel_filler_status_ok: "✅ Хватает (останется {amount} мл).",
+        cartel_filler_status_bad: "❌ Не хватает {amount} мл наполнителя.",
+        cartel_paste_usage_text: "🥣 Расход пасты: на Картель — {cartel} мл, на продажу — {sell} мл.",
+        cartel_rep_threshold: "(Порог +10 превышен)",
+        cartel_rep_max: "(Макс. бонус)",
+        cartel_stipend_base: "(Базовая 150 + 4 × {rep} реп.)",
+        error_no_extract: "Нет экстракта."
     },
     en: {
         title: "Probably Stolen",
         sub: "Chem Calculator",
-        lang: "Language",
+        currency: "cr.",
         product: "Product",
         alcohol: "Alcohol Type",
         alcohol_70: "Alcohol Bottle (70%)",
@@ -231,8 +233,6 @@ const TRANSLATIONS = {
         total_output: "🎯 Total Output:",
         ready_product: "Ready Product",
         ready_units: "Ready Units",
-        leftover: "(and",
-        leftover_ml: "ml leftover)",
         price_per_item: "💰 Price per 1 pc:",
         base_price: "Base",
         quality_bonus: "Quality Bonus",
@@ -251,7 +251,6 @@ const TRANSLATIONS = {
         module_blender: "Blender",
         module_heater: "Heating Plate",
         module_packer: "Packer",
-        // Grades
         grade_pure: "Lab Pure",
         grade_pharma: "Pharma Grade",
         grade_near: "Near-Pharma",
@@ -259,7 +258,6 @@ const TRANSLATIONS = {
         grade_cut: "Cut Product",
         grade_junk: "Junk Grade",
         grade_starch: "Starch Grade",
-        // Warnings & Errors
         error_no_paste: "Enter paste amount.",
         error_no_reducing: "Enter reducing agent amount.",
         error_no_methylol: "Enter methylol amount.",
@@ -268,23 +266,20 @@ const TRANSLATIONS = {
         warn_lack_reducing_2: "ml extract you need",
         warn_lack_reducing_3: "ml. You only have",
         warn_lack_reducing_4: "ml.",
-        // Pills
         pill_zyanide: "Zyanide Pill (0.6)",
         pill_phanta: "Phanta Pill (0.5)",
         pill_birth: "Birth Control (0.1)",
         beakers: "Beakers:",
         pills: "Pills:",
-        // Recipes
         dream_dust: "Dream Dust",
         nightmare_dust: "Nightmare Dust",
         caffeine_pill: "Caffeine Pill",
         phanta_pill: "Phanta Pill",
         nomore_injector: "Nomore Injector",
-        // Units
         unit_vials: "vials",
         unit_pills: "pills",
         unit_injectors: "injectors",
-        // Inputs
+        unit_pcs: "pcs.",
         input_mush: "Total Paste (ml)",
         input_mush_nightmare: "Nightmare Paste (ml)",
         input_mush_coffee: "Coffee Bean Paste (ml)",
@@ -294,7 +289,6 @@ const TRANSLATIONS = {
         input_protein_coffee: "Protein (ml)",
         input_fat: "Fat or Oil (ml)",
         input_reducing: "Reducing Agent (ml)",
-        // Cartel Weeks
         week_1: "Week 1: 10 vials, 40%",
         week_2: "Week 2: 15 vials, 45%",
         week_3: "Week 3: 20 vials, 50%",
@@ -302,7 +296,6 @@ const TRANSLATIONS = {
         week_5: "Week 5: 30 vials, 60%",
         week_6: "Week 6: 35 vials, 65%",
         week_7: "Week 7+: 40 vials, 70%",
-        // Steps
         step_blender: "1. Blender",
         step_extraction: "2. Extraction",
         step_heating: "3. Heating",
@@ -340,7 +333,6 @@ const TRANSLATIONS = {
         desc_agent_nomore: "Add Lipobond Agent (⅓ of extract).",
         desc_react_nomore: "Heat to 50–55°C until extract reaches 0. Above 55°C reaction stops.",
         desc_filter_nomore: "Filter through Cotton Cloth. 60% extract = Nomore. 6.7 ml extract = 1 injector.",
-        // Pipeline
         pipe_title: "⚙️ Pipeline:",
         pipe_paste: "1. Paste:",
         pipe_blender_lost: "2. Blender",
@@ -355,12 +347,24 @@ const TRANSLATIONS = {
         pipe_mod: "mod",
         pipe_loses: "loses",
         pipe_ml: "ml",
-        // Labels
         label_alcohol: "Alcohol",
         label_acid_base: "Acid/Base",
         label_agent: "Agent",
         label_extract: "Extract",
         label_reducing: "Reducing Agent",
-        label_ml: "ml"
+        label_ml: "ml",
+        after_blender: "after blender",
+        leftover_text: "(and {amount} ml leftover)",
+        revenue_text: "Revenue ({amount} pcs.)",
+        cartel_turn_in_text: "Turn in {vials} vials at {purity}%:",
+        cartel_sale_items_text: "{amount} pcs.",
+        cartel_extract_amount_text: "{amount} ml",
+        cartel_filler_status_ok: "✅ Enough (leaves {amount} ml).",
+        cartel_filler_status_bad: "❌ Not enough filler ({amount} ml).",
+        cartel_paste_usage_text: "🥣 Paste Usage: for Cartel — {cartel} ml, for sale — {sell} ml.",
+        cartel_rep_threshold: "(Threshold +10 exceeded)",
+        cartel_rep_max: "(Max bonus)",
+        cartel_stipend_base: "(Base 150 + 4 × {rep} rep.)",
+        error_no_extract: "No extract."
     }
 };
