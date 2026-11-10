@@ -22,7 +22,6 @@
     </div>
     
     <div class="grid-container" id="mainGrid">
-        <!-- Left Column -->
         <div class="col">
             <div class="field">
                 <label for="recipe" data-i18n="product">Продукт</label>
@@ -74,7 +73,6 @@
             </div>
         </div>
         
-        <!-- Center Column -->
         <div class="col">
             <div class="panel" style="flex:1">
                 <div class="rtitle" data-i18n="recipe_process">📋 Рецепт и процесс</div>
@@ -85,7 +83,6 @@
             </div>
         </div>
         
-        <!-- Right Column -->
         <div class="col">
             <div class="panel">
                 <div class="rtitle" data-i18n="results">📊 Результаты</div>
@@ -94,7 +91,6 @@
             </div>
         </div>
         
-        <!-- Cartel Column -->
         <div class="col" id="col-cartel">
             <div class="panel cartel-panel" id="cartelBox" style="display:none">
                 <div class="rtitle rtitle-cartel" data-i18n="cartel">👑 Сдача Картеля</div>
@@ -199,10 +195,10 @@
         if (!amount || amount <= 0) return '';
         let rem = Math.round(amount * 10) / 10, integerPart = Math.floor(rem), fractionalPart = Math.round((rem - integerPart) * 10) / 10;
         let beakers = [];
-        if (integerPart >= 50) { let c = Math.floor(integerPart / 50); beakers.push(`${c}×50`); integerPart %= 50; }
-        if (integerPart >= 25) { let c = Math.floor(integerPart / 25); beakers.push(`${c}×25`); integerPart %= 25; }
-        if (integerPart >= 5) { let c = Math.floor(integerPart / 5); beakers.push(`${c}×5`); integerPart %= 5; }
-        if (integerPart >= 1) beakers.push(`${integerPart}×1`);
+        if (integerPart >= 50) { let c = Math.floor(integerPart / 50); beakers.push(`${c}×50${t('label_ml')}`); integerPart %= 50; }
+        if (integerPart >= 25) { let c = Math.floor(integerPart / 25); beakers.push(`${c}×25${t('label_ml')}`); integerPart %= 25; }
+        if (integerPart >= 5) { let c = Math.floor(integerPart / 5); beakers.push(`${c}×5${t('label_ml')}`); integerPart %= 5; }
+        if (integerPart >= 1) beakers.push(`${integerPart}×1${t('label_ml')}`);
         
         let pills = [], tempFrac = fractionalPart;
         let c06 = Math.floor(tempFrac / 0.6);
@@ -299,30 +295,30 @@
             const descMush = id === 'nightmare_dust' ? t('desc_nightmare') : t('desc_mush');
             html = `
                 <div class="step"><div class="stitle">${t('step_blender')}</div><div class="desc">${descMush}</div></div>
-                <div class="step"><div class="stitle">${t('step_extraction')}</div><div class="desc">${t('desc_extraction')}</div><div class="line"><span>Alcohol</span><span class="amt" id="amt-alc">0 ml</span></div></div>
-                <div class="step"><div class="stitle">${t('step_cleaning')}</div><div class="desc">${t('desc_cleaning')}</div><div class="line"><span>Acid/Base</span><span class="amt" id="amt-prot">0 ml</span></div></div>
+                <div class="step"><div class="stitle">${t('step_extraction')}</div><div class="desc">${t('desc_extraction')}</div><div class="line"><span>${t('label_alcohol')}</span><span class="amt" id="amt-alc">0 ${t('label_ml')}</span></div></div>
+                <div class="step"><div class="stitle">${t('step_cleaning')}</div><div class="desc">${t('desc_cleaning')}</div><div class="line"><span>${t('label_acid_base')}</span><span class="amt" id="amt-prot">0 ${t('label_ml')}</span></div></div>
                 <div class="step"><div class="stitle">${t('step_filtering')}</div><div class="desc">${t('desc_filtering')}</div></div>
                 <div class="step"><div class="stitle">${t('step_evap_pack')}</div><div class="desc">${descEvap}</div>${purityBlock}</div>`;
         } else if (id === 'caffeine_pill') {
             html = `
                 <div class="step"><div class="stitle">${t('step_blender')}</div><div class="desc">${t('desc_coffee')}</div></div>
-                <div class="step"><div class="stitle">${t('step_agent')}</div><div class="desc">${t('desc_agent_coffee')}</div><div class="line"><span>Agent</span><span class="amt" id="amt-fat">0 ml</span></div></div>
-                <div class="step"><div class="stitle">${t('step_extraction')}</div><div class="desc">${t('desc_extract_coffee')}</div><div class="line"><span>Alcohol</span><span class="amt" id="amt-alc">0 ml</span></div></div>
-                <div class="step"><div class="stitle">${t('step_cleaning')}</div><div class="desc">${t('desc_clean_coffee')}</div><div class="line"><span>Acid/Base</span><span class="amt" id="amt-prot">0 ml</span></div></div>
+                <div class="step"><div class="stitle">${t('step_agent')}</div><div class="desc">${t('desc_agent_coffee')}</div><div class="line"><span>${t('label_agent')}</span><span class="amt" id="amt-fat">0 ${t('label_ml')}</span></div></div>
+                <div class="step"><div class="stitle">${t('step_extraction')}</div><div class="desc">${t('desc_extract_coffee')}</div><div class="line"><span>${t('label_alcohol')}</span><span class="amt" id="amt-alc">0 ${t('label_ml')}</span></div></div>
+                <div class="step"><div class="stitle">${t('step_cleaning')}</div><div class="desc">${t('desc_clean_coffee')}</div><div class="line"><span>${t('label_acid_base')}</span><span class="amt" id="amt-prot">0 ${t('label_ml')}</span></div></div>
                 <div class="step"><div class="stitle">${t('step_evap_pack')}</div><div class="desc">${t('desc_evap_coffee')}</div>${purityBlock}</div>`;
         } else if (id === 'phanta_pill') {
             html = `
-                <div class="step"><div class="stitle">${t('step_remove_stab')}</div><div class="desc">${t('desc_stab_phanta')}</div><div class="line"><span>Acid</span><span class="amt" id="amt-stab">0 ml</span></div></div>
+                <div class="step"><div class="stitle">${t('step_remove_stab')}</div><div class="desc">${t('desc_stab_phanta')}</div><div class="line"><span>${t('label_acid_base')}</span><span class="amt" id="amt-stab">0 ${t('label_ml')}</span></div></div>
                 <div class="step"><div class="stitle">${t('step_filter_neutral')}</div><div class="desc">${t('desc_filter_phanta')}</div></div>
-                <div class="step"><div class="stitle">${t('step_reduction')}</div><div class="desc">${t('desc_red_phanta')}</div><div class="line"><span>Reducing Agent</span><span class="amt" id="amt-red">0 ml</span></div></div>
+                <div class="step"><div class="stitle">${t('step_reduction')}</div><div class="desc">${t('desc_red_phanta')}</div><div class="line"><span>${t('label_reducing')}</span><span class="amt" id="amt-red">0 ${t('label_ml')}</span></div></div>
                 <div class="step"><div class="stitle">${t('step_heating')}</div><div class="desc">${t('desc_heat_phanta')}</div></div>
                 <div class="step"><div class="stitle">${t('step_evap_pack')}</div><div class="desc">${t('desc_evap_phanta')}</div>${purityBlock}</div>`;
         } else if (id === 'nomore_injector') {
             html = `
-                <div class="step"><div class="stitle">${t('step_extract_nomore')}</div><div class="desc">${t('desc_extract_nomore')}</div><div class="line"><span>Alcohol</span><span class="amt" id="amt-alc">0 ml</span></div></div>
-                <div class="step"><div class="stitle">${t('step_mix_nomore')}</div><div class="desc">${t('desc_clean_nomore')}</div><div class="line"><span>Acid/Base</span><span class="amt" id="amt-prot">0 ml</span></div>${purityBlock}</div>
-                <div class="step"><div class="stitle">${t('step_mix')}</div><div class="desc">${t('desc_mix_nomore')}</div><div class="line"><span>Extract</span><span class="amt" id="amt-ext">0 ml</span></div><div class="line"><span>Reducing Agent</span><span class="amt" id="amt-red">0 ml</span></div></div>
-                <div class="step"><div class="stitle">${t('step_agent')}</div><div class="desc">${t('desc_agent_nomore')}</div><div class="line"><span>Agent</span><span class="amt" id="amt-agent">0 ml</span></div></div>
+                <div class="step"><div class="stitle">${t('step_extract_nomore')}</div><div class="desc">${t('desc_extract_nomore')}</div><div class="line"><span>${t('label_alcohol')}</span><span class="amt" id="amt-alc">0 ${t('label_ml')}</span></div></div>
+                <div class="step"><div class="stitle">${t('step_mix_nomore')}</div><div class="desc">${t('desc_clean_nomore')}</div><div class="line"><span>${t('label_acid_base')}</span><span class="amt" id="amt-prot">0 ${t('label_ml')}</span></div>${purityBlock}</div>
+                <div class="step"><div class="stitle">${t('step_mix')}</div><div class="desc">${t('desc_mix_nomore')}</div><div class="line"><span>${t('label_extract')}</span><span class="amt" id="amt-ext">0 ${t('label_ml')}</span></div><div class="line"><span>${t('label_reducing')}</span><span class="amt" id="amt-red">0 ${t('label_ml')}</span></div></div>
+                <div class="step"><div class="stitle">${t('step_agent')}</div><div class="desc">${t('desc_agent_nomore')}</div><div class="line"><span>${t('label_agent')}</span><span class="amt" id="amt-agent">0 ${t('label_ml')}</span></div></div>
                 <div class="step"><div class="stitle">${t('step_reaction')}</div><div class="desc">${t('desc_react_nomore')}</div></div>
                 <div class="step"><div class="stitle">${t('step_filtering')}</div><div class="desc">${t('desc_filter_nomore')}</div></div>`;
         }
@@ -335,6 +331,9 @@
     }
 
     function updateAll() {
+        warnEl.innerHTML = '';
+        errEl.textContent = '';
+
         const id = recipeSel.value;
         const r = RECIPES[id];
         
@@ -390,7 +389,7 @@
                 const lostAmount = rawPaste * lossPct;
                 const usablePaste = rawPaste - lostAmount;
                 totalExtract = usablePaste * r.extractYield;
-                pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_paste')} <b>${fmt(rawPaste)} ml</b><br>${t('pipe_blender_lost')} (${bm} mod) loses ${(lossPct * 100)}%: <b style="color:#f87171">−${fmt(lostAmount)} ml</b><br>${t('pipe_left')} <b>${fmt(usablePaste)} ml</b><br>${t('pipe_extract')} (${r.extractYield * 100}%): <b style="color:#a0d6a0">${fmt(totalExtract)} ml</b>`;
+                pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_paste')} <b>${fmt(rawPaste)} ${t('pipe_ml')}</b><br>${t('pipe_blender_lost')} (${bm} ${t('pipe_mod')}) ${t('pipe_loses')} ${(lossPct * 100)}%: <b style="color:#f87171">−${fmt(lostAmount)} ${t('pipe_ml')}</b><br>${t('pipe_left')} <b>${fmt(usablePaste)} ${t('pipe_ml')}</b><br>${t('pipe_extract')} (${r.extractYield * 100}%): <b style="color:#a0d6a0">${fmt(totalExtract)} ${t('pipe_ml')}</b>`;
             }
         } else if (id === 'nomore_injector') {
             const rawPaste = inputs.mush;
@@ -421,7 +420,7 @@
                         warnEl.innerHTML = '';
                     }
                     totalExtract = effectiveExtract * 0.6;
-                    pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_paste')} <b>${fmt(rawPaste)} ml</b><br>${t('pipe_blender_lost')} (${bm} mod) loses ${(lossPct * 100)}%: <b style="color:#f87171">−${fmt(lostAmount)} ml</b><br>${t('pipe_left')} <b>${fmt(usablePaste)} ml</b><br>${t('pipe_dream_extract')} <b style="color:#7bc8f2">${fmt(dreamExtractTotal)} ml</b><br>${hasCartel ? `${t('pipe_for_cartel')} <b style="color:#f0b36a">${fmt(extractForCartel)} ml</b><br>` : ''}${t('pipe_left_nomore')} <b style="color:#a0d6a0">${fmt(extractForNomore)} ml</b><br>${t('pipe_nomore')} <b style="color:#a0d6a0">${fmt(totalExtract)} ml</b>`;
+                    pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_paste')} <b>${fmt(rawPaste)} ${t('pipe_ml')}</b><br>${t('pipe_blender_lost')} (${bm} ${t('pipe_mod')}) ${t('pipe_loses')} ${(lossPct * 100)}%: <b style="color:#f87171">−${fmt(lostAmount)} ${t('pipe_ml')}</b><br>${t('pipe_left')} <b>${fmt(usablePaste)} ${t('pipe_ml')}</b><br>${t('pipe_dream_extract')} <b style="color:#7bc8f2">${fmt(dreamExtractTotal)} ${t('pipe_ml')}</b><br>${hasCartel ? `${t('pipe_for_cartel')} <b style="color:#f0b36a">${fmt(extractForCartel)} ${t('pipe_ml')}</b><br>` : ''}${t('pipe_left_nomore')} <b style="color:#a0d6a0">${fmt(extractForNomore)} ${t('pipe_ml')}</b><br>${t('pipe_nomore')} <b style="color:#a0d6a0">${fmt(totalExtract)} ${t('pipe_ml')}</b>`;
                 }
             }
         } else if (id === 'phanta_pill') {
@@ -434,42 +433,41 @@
                 totalExtract = methylol * r.extractYield;
                 warnEl.innerHTML = '';
             }
-            pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>1. Methylol: <b>${fmt(methylol)} ml</b><br>2. Output (10%): <b style="color:${isCraftable ? '#a0d6a0' : '#f87171'}">${fmt(totalExtract)} ml</b>`;
+            pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_methylol')} <b>${fmt(methylol)} ${t('pipe_ml')}</b><br>${t('pipe_output')} <b style="color:${isCraftable ? '#a0d6a0' : '#f87171'}">${fmt(totalExtract)} ${t('pipe_ml')}</b>`;
         }
 
         if (errorMsg) {
             errEl.textContent = errorMsg;
             return;
         }
-        errEl.textContent = '';
 
         if (id === 'dream_dust' || id === 'nightmare_dust') {
             const usablePaste = inputs.mush * (1 - lossPct);
             const pureAlcNeeded = usablePaste * r.alcoholRatio;
             const bottleAlcNeeded = pureAlcNeeded / alcPct;
-            updateText('amt-alc', `${fmt(bottleAlcNeeded)} ml`);
-            updateText('amt-prot', `${fmt(inputs.protein)} ml` + getMeasurementHtml(inputs.protein));
+            updateText('amt-alc', `${fmt(bottleAlcNeeded)} ${t('label_ml')}`);
+            updateText('amt-prot', `${fmt(inputs.protein)} ${t('label_ml')}` + getMeasurementHtml(inputs.protein));
         } else if (id === 'caffeine_pill') {
             const usablePaste = inputs.mush * (1 - lossPct);
             const pureAlcNeeded = usablePaste * r.alcoholRatio;
             const bottleAlcNeeded = pureAlcNeeded / alcPct;
-            updateText('amt-fat', `${fmt(inputs.fat * 0.125)} ml` + getMeasurementHtml(inputs.fat * 0.125));
-            updateText('amt-alc', `${fmt(bottleAlcNeeded)} ml`);
-            updateText('amt-prot', `${fmt(inputs.protein)} ml` + getMeasurementHtml(inputs.protein));
+            updateText('amt-fat', `${fmt(inputs.fat * 0.125)} ${t('label_ml')}` + getMeasurementHtml(inputs.fat * 0.125));
+            updateText('amt-alc', `${fmt(bottleAlcNeeded)} ${t('label_ml')}`);
+            updateText('amt-prot', `${fmt(inputs.protein)} ${t('label_ml')}` + getMeasurementHtml(inputs.protein));
         } else if (id === 'phanta_pill') {
-            updateText('amt-stab', `${fmt(inputs.stab)} ml` + getMeasurementHtml(inputs.stab));
-            updateText('amt-red', `${fmt(inputs.methylol * 0.75)} ml` + getMeasurementHtml(inputs.methylol * 0.75));
+            updateText('amt-stab', `${fmt(inputs.stab)} ${t('label_ml')}` + getMeasurementHtml(inputs.stab));
+            updateText('amt-red', `${fmt(inputs.methylol * 0.75)} ${t('label_ml')}` + getMeasurementHtml(inputs.methylol * 0.75));
         } else if (id === 'nomore_injector') {
             const usablePaste = inputs.mush * (1 - lossPct);
             const pureExtract = usablePaste * 0.5;
             const pureAlcNeeded = usablePaste * 5;
             const bottleAlcNeeded = pureAlcNeeded / alcPct;
             const effectiveExtract = Math.min(Math.max(0, pureExtract - extractForCartel), inputs.reducing);
-            updateText('amt-alc', `${fmt(bottleAlcNeeded)} ml`);
-            updateText('amt-prot', `${fmt(inputs.protein)} ml` + getMeasurementHtml(inputs.protein));
-            updateText('amt-ext', `${fmt(effectiveExtract)} ml`);
-            updateText('amt-red', `${fmt(effectiveExtract)} ml` + getMeasurementHtml(effectiveExtract));
-            updateText('amt-agent', `${fmt(effectiveExtract * 0.333)} ml` + getMeasurementHtml(effectiveExtract * 0.333));
+            updateText('amt-alc', `${fmt(bottleAlcNeeded)} ${t('label_ml')}`);
+            updateText('amt-prot', `${fmt(inputs.protein)} ${t('label_ml')}` + getMeasurementHtml(inputs.protein));
+            updateText('amt-ext', `${fmt(effectiveExtract)} ${t('label_ml')}`);
+            updateText('amt-red', `${fmt(effectiveExtract)} ${t('label_ml')}` + getMeasurementHtml(effectiveExtract));
+            updateText('amt-agent', `${fmt(effectiveExtract * 0.333)} ${t('label_ml')}` + getMeasurementHtml(effectiveExtract * 0.333));
         }
         
         updateText('purityGradeText', `<span style="color:${g.c}">${purePurity.toFixed(1)}% — ${g.n}</span>`);

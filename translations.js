@@ -167,7 +167,19 @@ const TRANSLATIONS = {
         pipe_dream_extract: "4. Экстракт снов (50%):",
         pipe_for_cartel: "5. Отложить на Картель (сырой экстракт):",
         pipe_left_nomore: "6. Остаток экстракта на Оксинет:",
-        pipe_nomore: "7. Готовый Оксинет (60% от остатка):"
+        pipe_nomore: "7. Готовый Оксинет (60% от остатка):",
+        pipe_methylol: "1. Метилол:",
+        pipe_output: "2. Выход (10%):",
+        pipe_mod: "мод.",
+        pipe_loses: "теряет",
+        pipe_ml: "мл",
+        // Labels
+        label_alcohol: "Алкоголь",
+        label_acid_base: "Кислота/Щёлочь",
+        label_agent: "Агент",
+        label_extract: "Экстракт снов",
+        label_reducing: "Восстановитель",
+        label_ml: "мл"
     },
     en: {
         title: "Probably Stolen",
@@ -337,6 +349,18 @@ const TRANSLATIONS = {
         pipe_dream_extract: "4. Dream Extract (50%):",
         pipe_for_cartel: "5. Set aside for Cartel (raw extract):",
         pipe_left_nomore: "6. Extract left for Nomore:",
-        pipe_nomore: "7. Ready Nomore (60% of remainder):"
+        pipe_nomore: "7. Ready Nomore (60% of remainder):",
+        pipe_methylol: "1. Methylol:",
+        pipe_output: "2. Output (10%):",
+        pipe_mod: "mod",
+        pipe_loses: "loses",
+        pipe_ml: "ml",
+        // Labels
+        label_alcohol: "Alcohol",
+        label_acid_base: "Acid/Base",
+        label_agent: "Agent",
+        label_extract: "Extract",
+        label_reducing: "Reducing Agent",
+        label_ml: "ml"
     }
 };
