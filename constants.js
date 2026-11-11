@@ -17,8 +17,8 @@ export const DIFF_SETTINGS = {
 export const BLENDER_LOSS = [0.35, 0.20, 0.10, 0.05, 0.00];
 export const FINISHER_IMP = [0.12, 0.06, 0.03, 0.01, 0.00];
 export const HEATER_SETTINGS = [
-    'module_heater_99_fixed',
-    'module_heater_160_fixed',
+    'module_heater_99_manual',
+    'module_heater_160_manual',
     'module_heater_adjustable',
     'module_heater_4x_speed',
     'module_heater_16x_speed'

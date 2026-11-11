@@ -55,7 +55,7 @@ export function updateModuleStatuses(blenderModules, heaterModules, packerModule
         },
         {
             id: 'heater',
-            text: `${t(HEATER_SETTINGS[heaterModules])}${heaterModules === 1 ? ` · ${t('module_heater_manual_control')}` : ''}`,
+            text: t(HEATER_SETTINGS[heaterModules]),
             isGood: heaterModules >= 1
         },
         {
