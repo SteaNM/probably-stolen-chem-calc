@@ -209,7 +209,10 @@ export function updateAll(event) {
         elements.cartelBox.style.display = 'none';
     }
     
-    elements.mushCostWrapper.style.display = (id === 'phanta_pill') ? 'none' : 'block';
+    elements.mushCostWrapper.style.display = id === 'phanta_pill' ? 'none' : 'block';
+    elements.mushCostWrapper.querySelector('label').textContent = t(
+        id === 'birth_control_pill' ? 'cost_birth_control' : 'cost_mush'
+    );
 
     const batchRows = usesAlcohol
         ? getPortionRows().map((row, index) => getPortionData(index, numericValues))
@@ -223,7 +226,7 @@ export function updateAll(event) {
             );
         });
     } else {
-        ['methylol', 'stab'].forEach(key => {
+        ['methylol', 'stab', 'birth_control_count', 'birth_control_filtered_volume'].forEach(key => {
             const value = numericValues.get(`scan_${key}`);
             if (value !== undefined) inputs[key] = value;
         });
@@ -282,7 +285,19 @@ export function updateAll(event) {
     let effectiveExtract = 0;
 
     // --- ОБНОВЛЕНИЕ КОНВЕЙЕРА С ДИНАМИЧЕСКИМ СБРОСОМ ---
-    if (id === 'dream_dust' || id === 'nightmare_dust' || id === 'caffeine_pill') {
+    if (id === 'birth_control_pill') {
+        const pillCount = inputs.birth_control_count || 0;
+        const inputVolume = pillCount * r.outputMl;
+        const lostVolume = inputVolume * lossPct;
+        const blendedVolume = inputVolume - lostVolume;
+        const measuredFilteredVolume = inputs.birth_control_filtered_volume || 0;
+        totalExtract = measuredFilteredVolume > 0 ? measuredFilteredVolume : blendedVolume;
+        if (pillCount <= 0) errorMsg = t('error_no_birth_control');
+        elements.pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_birth_control_input', {
+            count: fmt(pillCount),
+            volume: fmt(inputVolume)
+        })}<br>${t('pipe_blender_lost')} (${bm} ${t('pipe_mod')}) ${t('pipe_loses')} ${(lossPct * 100)}%: <b style="color:#f87171">−${fmt(lostVolume)} ${t('pipe_ml')}</b><br>${t('pipe_left')} <b>${fmt(blendedVolume)} ${t('pipe_ml')}</b><br>${t('pipe_birth_control_filtered_volume')} <b style="color:#a0d6a0">${fmt(totalExtract)} ${t('pipe_ml')}</b>`;
+    } else if (id === 'dream_dust' || id === 'nightmare_dust' || id === 'caffeine_pill') {
         const rawPaste = inputs.mush;
         if (rawPaste <= 0) {
             errorMsg = t('error_no_paste');
@@ -418,12 +433,15 @@ export function updateAll(event) {
 
     updateText('purityGradeText', `<span style="color:${g.c}">${purePurity.toFixed(1)}% — ${g.n}</span>`);
     
-    const totalItems = Math.floor(totalExtract / r.outputMl);
-    const leftoverPure = totalExtract - (totalItems * r.outputMl);
+    const totalItems = Math.floor(totalExtract / r.outputMl + 1e-9);
+    const leftoverPure = Math.max(0, totalExtract - (totalItems * r.outputMl));
     const actualMushCost = rawMushCost;
     const actualChemCost = chemCountUsed * 50;
     const actualRestrictedCost = restrictedCountUsed * 100;
     const totalCost = actualMushCost + actualChemCost + actualRestrictedCost;
+    const sourceCostLabel = id === 'birth_control_pill'
+        ? t('cost_birth_control_items')
+        : t('cost_mushrooms');
 
     elements.outputBox.innerHTML = `
         <div style="font-size:.85rem;color:#cbd8e6;margin-bottom:6px">${t('total_output')}</div>
@@ -459,7 +477,7 @@ export function updateAll(event) {
             </div>
             <div class="cost-box" style="margin-bottom:8px">
                 <div style="font-size:.85rem;color:#cbd8e6;font-weight:600;margin-bottom:4px">${t('costs_breakdown')}</div>
-                ${id !== 'phanta_pill' ? `<div class="cost-line"><span>${t('cost_mushrooms')}</span><span class="amt" style="color:${actualMushCost > 0 ? '#f87171' : '#a0d6a0'}">${actualMushCost > 0 ? `−${actualMushCost.toFixed(1)} ${t('currency')}` : `0 ${t('currency')}`}</span></div>` : ''}
+                ${id !== 'phanta_pill' ? `<div class="cost-line"><span>${sourceCostLabel}</span><span class="amt" style="color:${actualMushCost > 0 ? '#f87171' : '#a0d6a0'}">${actualMushCost > 0 ? `−${actualMushCost.toFixed(1)} ${t('currency')}` : `0 ${t('currency')}`}</span></div>` : ''}
                 <div class="cost-line"><span>${t('cost_chem_packs')} (${chemCountUsed} ${t('unit_pcs')})</span><span class="amt" style="color:${actualChemCost > 0 ? '#f87171' : '#a0d6a0'}">${actualChemCost > 0 ? `−${actualChemCost.toFixed(1)} ${t('currency')}` : `0 ${t('currency')}`}</span></div>
                 <div class="cost-line"><span>${t('cost_restricted_packs')} (${restrictedCountUsed} ${t('unit_pcs')})</span><span class="amt" style="color:${actualRestrictedCost > 0 ? '#f87171' : '#a0d6a0'}">${actualRestrictedCost > 0 ? `−${actualRestrictedCost.toFixed(1)} ${t('currency')}` : `0 ${t('currency')}`}</span></div>
                 <div class="cost-line" style="border-top:1px solid #25323e;padding-top:4px;margin-top:4px"><span><b>${t('total_costs')}</b></span><span class="amt" style="color:#f87171">−${totalCost.toFixed(1)} ${t('currency')}</span></div>

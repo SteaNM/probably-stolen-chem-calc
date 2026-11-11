@@ -39,6 +39,7 @@ export function renderMods(r) {
     ];
     devs.forEach(d => {
         if (d.k === 'blender' && !r.isBlendable) return;
+        if (d.k === 'heater' && r.usesHeater === false) return;
         const c = document.createElement('div'); c.className = 'modcard';
         c.innerHTML = `<h4>${d.l}</h4><input type="number" min="0" max="4" step="1" value="0" id="mod_${d.k}"><div class="hint" id="mod_status_${d.k}"></div>`;
         elements.modgrid.appendChild(c);
@@ -152,11 +153,14 @@ export function renderScannerInputs(r, savedRows = []) {
 
     let inputs = [];
     if (id === 'phanta_pill') inputs = [{key:'methylol', label: t('input_methylol')}, {key:'stab', label: t('input_stab')}];
+    if (id === 'birth_control_pill') {
+        inputs = [{key:'birth_control_count', label: t('input_birth_control_count'), step: 1}];
+    }
 
     inputs.forEach(inp => {
         const card = document.createElement('div');
         card.className = 'scanner-card';
-        card.innerHTML = `<h4>${inp.label}</h4><input type="number" min="0" step="0.01" value="0" id="scan_${inp.key}">`;
+        card.innerHTML = `<h4>${inp.label}</h4><input type="number" min="0" step="${inp.step ?? '0.01'}" value="0" id="scan_${inp.key}">`;
         elements.scannerInputs.appendChild(card);
     });
 }
@@ -177,11 +181,22 @@ export function removePortionRow(index) {
 
 export function renderStepsLayout(id) {
     let html = '';
+    const purityLabel = id === 'birth_control_pill'
+        ? t('purity_before_packer')
+        : t('purity_after_evap');
     const purityBlock = `
+        ${id === 'birth_control_pill' ? `
         <div class="line purity-line">
-            <span class="purity-label">${t('purity_after_evap')}</span>
+            <label class="purity-label" for="scan_birth_control_filtered_volume">${t('input_birth_control_filtered_volume')}</label>
             <span class="purity-value">
-                <input type="number" id="purityInputValue" class="purity-input" value="100" min="1" max="100" step="any">
+                <input type="number" id="scan_birth_control_filtered_volume" class="purity-input" value="0" min="0" step="0.01" aria-label="${t('input_birth_control_filtered_volume')}">
+                <span>${t('label_ml')}</span>
+            </span>
+        </div>` : ''}
+        <div class="line purity-line">
+            <span class="purity-label">${purityLabel}</span>
+            <span class="purity-value">
+                <input type="number" id="purityInputValue" class="purity-input" value="100" min="${id === 'birth_control_pill' ? '0' : '1'}" max="100" step="any">
                 <span>%</span>
             </span>
         </div>
@@ -221,6 +236,12 @@ export function renderStepsLayout(id) {
             <div class="step"><div class="stitle">${t('step_agent')}</div><div class="desc">${t('desc_agent_nomore')}</div><div class="line"><span>${t('label_agent')}</span><span class="amt" id="amt-agent"></span></div></div>
             <div class="step"><div class="stitle">${t('step_reaction')}</div><div class="desc">${t('desc_react_nomore')}</div></div>
             <div class="step"><div class="stitle">${t('step_filtering')}</div><div class="desc">${t('desc_filter_nomore')}</div></div>`;
+    } else if (id === 'birth_control_pill') {
+        html = `
+            <div class="step"><div class="stitle">${t('step_birth_control_blend')}</div><div class="desc">${t('desc_birth_control_blend')}</div></div>
+            <div class="step"><div class="stitle">${t('step_birth_control_clean')}</div><div class="desc">${t('desc_birth_control_clean')}</div></div>
+            <div class="step"><div class="stitle">${t('step_birth_control_check')}</div><div class="desc">${t('desc_birth_control_check')}</div>${purityBlock}</div>
+            <div class="step"><div class="stitle">${t('step_birth_control_finish')}</div><div class="desc">${t('desc_birth_control_finish')}</div></div>`;
     }
     elements.stepsEl.innerHTML = html;
 }

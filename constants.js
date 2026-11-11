@@ -3,7 +3,8 @@ export const RECIPES = {
     nightmare_dust: { outputMl: 4, unitKey: 'unit_vials', isBlendable: true, extractYield: 0.5, alcoholRatio: 5, baseValue: 36, contrabandMarkup: 1.00 },
     caffeine_pill: { outputMl: 5, unitKey: 'unit_pills', isBlendable: true, extractYield: 0.75, alcoholRatio: 0.75, baseValue: 10, contrabandMarkup: 0 },
     phanta_pill: { outputMl: 0.5, unitKey: 'unit_pills', isBlendable: false, extractYield: 0.1, baseValue: 12, contrabandMarkup: 1.00 },
-    nomore_injector: { outputMl: 4, unitKey: 'unit_injectors', isBlendable: true, extractYield: 0.5, baseValue: 50, contrabandMarkup: 0 }
+    nomore_injector: { outputMl: 4, unitKey: 'unit_injectors', isBlendable: true, extractYield: 0.5, baseValue: 50, contrabandMarkup: 0 },
+    birth_control_pill: { outputMl: 0.1, unitKey: 'unit_pills', isBlendable: true, usesHeater: false, extractYield: 1, baseValue: 15, contrabandMarkup: 0 }
 };
 
 export const DIFF_SETTINGS = {
