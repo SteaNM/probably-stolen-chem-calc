@@ -15,11 +15,9 @@ export const t = (key, params = {}) => {
 
 export function fmt(v) {
     if (v === 0) return '0';
-    if (v < 0.01) return v.toFixed(4);
-    if (v < 0.1) return v.toFixed(3);
-    if (v < 1) return v.toFixed(2);
-    if (v < 10) return v.toFixed(2);
-    return v.toFixed(1);
+    const rounded = Number(v.toFixed(2));
+    if (rounded === 0) return '<0.01';
+    return String(rounded);
 }
 
 export function getMeasurementHtml(amount, { wholeMlOnly = false } = {}) {

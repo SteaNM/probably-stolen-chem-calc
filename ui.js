@@ -95,7 +95,7 @@ export function renderScannerInputs(r, savedRows = []) {
                         <label class="portion-field">
                             <span class="portion-field-label">${field.label}</span>
                             <span class="portion-input-wrap">
-                                <input type="number" id="portion_${rowIndex}_${field.key}" min="0" step="0.1" value="${row.values?.[field.key] ?? '0'}" data-ingredient="${field.key}" aria-label="${field.label}">
+                                <input type="number" id="portion_${rowIndex}_${field.key}" min="0" step="0.01" value="${row.values?.[field.key] ?? '0'}" data-ingredient="${field.key}" aria-label="${field.label}">
                                 <span>${t('label_ml')}</span>
                             </span>
                         </label>
@@ -127,7 +127,7 @@ export function renderScannerInputs(r, savedRows = []) {
     inputs.forEach(inp => {
         const card = document.createElement('div');
         card.className = 'scanner-card';
-        card.innerHTML = `<h4>${inp.label}</h4><input type="number" min="0" step="0.1" value="0" id="scan_${inp.key}">`;
+        card.innerHTML = `<h4>${inp.label}</h4><input type="number" min="0" step="0.01" value="0" id="scan_${inp.key}">`;
         elements.scannerInputs.appendChild(card);
     });
 }
@@ -166,7 +166,7 @@ export function renderStepsLayout(id) {
         const descMush = id === 'nightmare_dust' ? t('desc_nightmare') : t('desc_mush');
         html = `
             <div class="step"><div class="stitle">${t('step_blender')}</div><div class="desc">${descMush}</div></div>
-            <div class="step"><div class="stitle">${t('step_extraction')}</div><div class="desc">${t('desc_extraction')}</div><div class="line"><span>${t('label_alcohol')}</span><span class="amt" id="amt-alc"></span></div></div>
+            <div class="step"><div class="stitle">${t('step_extraction')}</div><div class="desc">${t('desc_extraction')}</div><div class="line"><span id="label-alcohol">${t('label_alcohol')}</span><span class="amt" id="amt-alc"></span></div></div>
             <div class="step"><div class="stitle">${t('step_cleaning')}</div><div class="desc">${t('desc_cleaning')}</div><div class="line"><span>${t('label_acid_base')}</span><span class="amt" id="amt-prot"></span></div></div>
             <div class="step"><div class="stitle">${t('step_filtering')}</div><div class="desc">${t('desc_filtering')}</div></div>
             <div class="step"><div class="stitle">${t('step_evap_pack')}</div><div class="desc">${descEvap}</div>${purityBlock}</div>`;
@@ -174,7 +174,7 @@ export function renderStepsLayout(id) {
         html = `
             <div class="step"><div class="stitle">${t('step_blender')}</div><div class="desc">${t('desc_coffee')}</div></div>
             <div class="step"><div class="stitle">${t('step_agent')}</div><div class="desc">${t('desc_agent_coffee')}</div><div class="line"><span>${t('label_agent')}</span><span class="amt" id="amt-fat"></span></div></div>
-            <div class="step"><div class="stitle">${t('step_extraction')}</div><div class="desc">${t('desc_extract_coffee')}</div><div class="line"><span>${t('label_alcohol')}</span><span class="amt" id="amt-alc"></span></div></div>
+            <div class="step"><div class="stitle">${t('step_extraction')}</div><div class="desc">${t('desc_extract_coffee')}</div><div class="line"><span id="label-alcohol">${t('label_alcohol')}</span><span class="amt" id="amt-alc"></span></div></div>
             <div class="step"><div class="stitle">${t('step_cleaning')}</div><div class="desc">${t('desc_clean_coffee')}</div><div class="line"><span>${t('label_acid_base')}</span><span class="amt" id="amt-prot"></span></div></div>
             <div class="step"><div class="stitle">${t('step_evap_pack')}</div><div class="desc">${t('desc_evap_coffee')}</div>${purityBlock}</div>`;
     } else if (id === 'phanta_pill') {
@@ -186,7 +186,7 @@ export function renderStepsLayout(id) {
             <div class="step"><div class="stitle">${t('step_evap_pack')}</div><div class="desc">${t('desc_evap_phanta')}</div>${purityBlock}</div>`;
     } else if (id === 'nomore_injector') {
         html = `
-            <div class="step"><div class="stitle">${t('step_extract_nomore')}</div><div class="desc">${t('desc_extract_nomore')}</div><div class="line"><span>${t('label_alcohol')}</span><span class="amt" id="amt-alc"></span></div></div>
+            <div class="step"><div class="stitle">${t('step_extract_nomore')}</div><div class="desc">${t('desc_extract_nomore')}</div><div class="line"><span id="label-alcohol">${t('label_alcohol')}</span><span class="amt" id="amt-alc"></span></div></div>
             <div class="step"><div class="stitle">${t('step_mix_nomore')}</div><div class="desc">${t('desc_clean_nomore')}</div><div class="line"><span>${t('label_acid_base')}</span><span class="amt" id="amt-prot"></span></div>${purityBlock}</div>
             <div class="step"><div class="stitle">${t('step_mix')}</div><div class="desc">${t('desc_mix_nomore')}</div><div class="line"><span>${t('label_extract')}</span><span class="amt" id="amt-ext"></span></div><div class="line"><span>${t('label_reducing')}</span><span class="amt" id="amt-red"></span></div></div>
             <div class="step"><div class="stitle">${t('step_agent')}</div><div class="desc">${t('desc_agent_nomore')}</div><div class="line"><span>${t('label_agent')}</span><span class="amt" id="amt-agent"></span></div></div>

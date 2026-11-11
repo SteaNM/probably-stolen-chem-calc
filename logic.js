@@ -93,7 +93,7 @@ function getPortionData(index, numericValues) {
     };
 }
 
-function updatePortionedText(id, rows, amountForBatch, { wholeMlOnly = false } = {}) {
+function updatePortionedText(id, rows, amountForBatch, { wholeMlOnly = false, alcoholStrength = 1 } = {}) {
     const rowAmounts = rows.map((row, index) => {
         const amount = amountForBatch(row, index);
         const measuredAmount = wholeMlOnly ? Math.ceil(amount - 1e-9) : amount;
@@ -110,6 +110,7 @@ function updatePortionedText(id, rows, amountForBatch, { wholeMlOnly = false } =
             ? t('alcohol_portion_line', {
                 number: index + 1,
                 amount: amountText,
+                pureAmount: fmt(perBatch * alcoholStrength),
                 count: row.count
             })
             : t('portion_instruction_line', {
@@ -123,8 +124,14 @@ function updatePortionedText(id, rows, amountForBatch, { wholeMlOnly = false } =
 
     const summary = wholeMlOnly
         ? [
-            `<span>${t('alcohol_all_at_once')}: ${Math.ceil(total - 1e-9)} ${t('label_ml')}${getMeasurementHtml(total, { wholeMlOnly: true })}</span>`,
-            `<span>${t('alcohol_reused')}: ${Math.ceil(Math.max(0, ...rowAmounts.map(row => row.amount)) - 1e-9)} ${t('label_ml')}${getMeasurementHtml(Math.max(0, ...rowAmounts.map(row => row.amount)), { wholeMlOnly: true })}</span>`
+            `<span>${t('alcohol_all_at_once', {
+                amount: Math.ceil(total - 1e-9),
+                pureAmount: fmt(Math.ceil(total - 1e-9) * alcoholStrength)
+            })}${getMeasurementHtml(total, { wholeMlOnly: true })}</span>`,
+            `<span>${t('alcohol_reused', {
+                amount: Math.ceil(Math.max(0, ...rowAmounts.map(row => row.amount)) - 1e-9),
+                pureAmount: fmt(Math.ceil(Math.max(0, ...rowAmounts.map(row => row.amount)) - 1e-9) * alcoholStrength)
+            })}${getMeasurementHtml(Math.max(0, ...rowAmounts.map(row => row.amount)), { wholeMlOnly: true })}</span>`
         ]
         : [`<span>${t('instruction_total')}: ${fmt(total)} ${t('label_ml')}${getMeasurementHtml(total)}</span>`];
 
@@ -199,6 +206,7 @@ export function updateAll(event) {
     const bm = numericValues.get('mod_blender') || 0;
     
     const alcPct = parseFloat(elements.alcoholType.value) || 0.7;
+    updateText('label-alcohol', t(alcPct < 1 ? 'label_diluted_alcohol' : 'label_pure_alcohol'));
     const diffKey = elements.difficulty.value;
     const diffConfig = DIFF_SETTINGS[diffKey];
 
@@ -216,6 +224,14 @@ export function updateAll(event) {
 
     let totalExtract = 0;
     let lossPct = BLENDER_LOSS[Math.min(bm, 4)];
+    const usableProtein = (inputs.protein || 0) * (1 - lossPct);
+    const usableBeanCaffeine = (inputs.caffeine || 0) * (1 - lossPct);
+    const blenderProteinLines = inputs.protein > 0
+        ? `<br>${t('pipe_blender_protein_lost')} <b style="color:#f87171">−${fmt(inputs.protein * lossPct)} ${t('pipe_ml')}</b><br>${t('pipe_protein_after_blender')} <b>${fmt(usableProtein)} ${t('pipe_ml')}</b>`
+        : '';
+    const blenderCaffeineLines = id === 'caffeine_pill' && inputs.caffeine > 0
+        ? `<br>${t('pipe_caffeine_from_beans')} <b>${fmt(inputs.caffeine)} ${t('pipe_ml')}</b><br>${t('pipe_blender_caffeine_lost')} <b style="color:#f87171">−${fmt(inputs.caffeine * lossPct)} ${t('pipe_ml')}</b><br>${t('pipe_caffeine_after_blender')} <b>${fmt(usableBeanCaffeine)} ${t('pipe_ml')}</b>`
+        : '';
     let isCraftable = true;
     let errorMsg = '';
     let dreamExtractTotal = 0;
@@ -232,12 +248,9 @@ export function updateAll(event) {
         } else {
             const lostAmount = rawPaste * lossPct;
             const usablePaste = rawPaste - lostAmount;
-            totalExtract = usablePaste * r.extractYield + (id === 'caffeine_pill' ? inputs.caffeine : 0);
+            totalExtract = usablePaste * r.extractYield + (id === 'caffeine_pill' ? usableBeanCaffeine : 0);
             const extractLabel = id === 'caffeine_pill' ? t('pipe_coffee_extract') : `${t('pipe_extract')} (${r.extractYield * 100}%)`;
-            const caffeineLine = id === 'caffeine_pill'
-                ? `<br>${t('pipe_caffeine_from_beans')} <b>${fmt(inputs.caffeine)} ${t('pipe_ml')}</b>`
-                : '';
-            elements.pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_paste')} <b>${fmt(rawPaste)} ${t('pipe_ml')}</b><br>${t('pipe_blender_lost')} (${bm} ${t('pipe_mod')}) ${t('pipe_loses')} ${(lossPct * 100)}%: <b style="color:#f87171">−${fmt(lostAmount)} ${t('pipe_ml')}</b><br>${t('pipe_left')} <b>${fmt(usablePaste)} ${t('pipe_ml')}</b>${caffeineLine}<br>${extractLabel} <b style="color:#a0d6a0">${fmt(totalExtract)} ${t('pipe_ml')}</b>`;
+            elements.pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_paste')} <b>${fmt(rawPaste)} ${t('pipe_ml')}</b><br>${t('pipe_blender_lost')} (${bm} ${t('pipe_mod')}) ${t('pipe_loses')} ${(lossPct * 100)}%: <b style="color:#f87171">−${fmt(lostAmount)} ${t('pipe_ml')}</b><br>${t('pipe_left')} <b>${fmt(usablePaste)} ${t('pipe_ml')}</b>${blenderProteinLines}${blenderCaffeineLines}<br>${extractLabel} <b style="color:#a0d6a0">${fmt(totalExtract)} ${t('pipe_ml')}</b>`;
         }
     } else if (id === 'nomore_injector') {
         const rawPaste = inputs.mush;
@@ -260,7 +273,7 @@ export function updateAll(event) {
             const reducing = inputs.reducing;
             if (reducing <= 0) {
                 errorMsg = t('error_no_reducing');
-                elements.pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_paste')} <b>${fmt(rawPaste)} ${t('pipe_ml')}</b><br>${t('pipe_dream_extract')} <b style="color:#7bc8f2">${fmt(dreamExtractTotal)} ${t('pipe_ml')}</b><br>${t('pipe_left_nomore')} <b style="color:#a0d6a0">${fmt(extractForNomore)} ${t('pipe_ml')}</b>`;
+                elements.pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_paste')} <b>${fmt(rawPaste)} ${t('pipe_ml')}</b><br>${t('pipe_blender_lost')} (${bm} ${t('pipe_mod')}) ${t('pipe_loses')} ${(lossPct * 100)}%: <b style="color:#f87171">−${fmt(lostAmount)} ${t('pipe_ml')}</b><br>${t('pipe_left')} <b>${fmt(usablePaste)} ${t('pipe_ml')}</b>${blenderProteinLines}<br>${t('pipe_dream_extract')} <b style="color:#7bc8f2">${fmt(dreamExtractTotal)} ${t('pipe_ml')}</b><br>${t('pipe_left_nomore')} <b style="color:#a0d6a0">${fmt(extractForNomore)} ${t('pipe_ml')}</b>`;
             } else {
                 effectiveExtract = Math.min(extractForNomore, reducing);
                 if (reducing < extractForNomore) {
@@ -269,7 +282,7 @@ export function updateAll(event) {
                     elements.warnEl.innerHTML = '';
                 }
                 totalExtract = effectiveExtract * 0.6;
-                elements.pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_paste')} <b>${fmt(rawPaste)} ${t('pipe_ml')}</b><br>${t('pipe_blender_lost')} (${bm} ${t('pipe_mod')}) ${t('pipe_loses')} ${(lossPct * 100)}%: <b style="color:#f87171">−${fmt(lostAmount)} ${t('pipe_ml')}</b><br>${t('pipe_left')} <b>${fmt(usablePaste)} ${t('pipe_ml')}</b><br>${t('pipe_dream_extract')} <b style="color:#7bc8f2">${fmt(dreamExtractTotal)} ${t('pipe_ml')}</b><br>${hasCartel ? `${t('pipe_for_cartel')} <b style="color:#f0b36a">${fmt(extractForCartel)} ${t('pipe_ml')}</b><br>` : ''}${t('pipe_left_nomore')} <b style="color:#a0d6a0">${fmt(extractForNomore)} ${t('pipe_ml')}</b><br>${t('pipe_nomore')} <b style="color:#a0d6a0">${fmt(totalExtract)} ${t('pipe_ml')}</b>`;
+                elements.pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_paste')} <b>${fmt(rawPaste)} ${t('pipe_ml')}</b><br>${t('pipe_blender_lost')} (${bm} ${t('pipe_mod')}) ${t('pipe_loses')} ${(lossPct * 100)}%: <b style="color:#f87171">−${fmt(lostAmount)} ${t('pipe_ml')}</b><br>${t('pipe_left')} <b>${fmt(usablePaste)} ${t('pipe_ml')}</b>${blenderProteinLines}<br>${t('pipe_dream_extract')} <b style="color:#7bc8f2">${fmt(dreamExtractTotal)} ${t('pipe_ml')}</b><br>${hasCartel ? `${t('pipe_for_cartel')} <b style="color:#f0b36a">${fmt(extractForCartel)} ${t('pipe_ml')}</b><br>` : ''}${t('pipe_left_nomore')} <b style="color:#a0d6a0">${fmt(extractForNomore)} ${t('pipe_ml')}</b><br>${t('pipe_nomore')} <b style="color:#a0d6a0">${fmt(totalExtract)} ${t('pipe_ml')}</b>`;
             }
         }
     } else if (id === 'phanta_pill') {
@@ -293,8 +306,8 @@ export function updateAll(event) {
 
         updatePortionedText('amt-alc', batchRows, (row) =>
             row.values.mush * (1 - lossPct) * alcoholRatio / alcPct,
-        { wholeMlOnly: true });
-        updatePortionedText('amt-prot', batchRows, (row) => row.values.protein);
+        { wholeMlOnly: true, alcoholStrength: alcPct });
+        updatePortionedText('amt-prot', batchRows, (row) => row.values.protein * (1 - lossPct));
 
         if (id === 'caffeine_pill') {
             updatePortionedText('amt-fat', batchRows, (row) => row.values.fat * 0.125);
