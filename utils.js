@@ -20,11 +20,43 @@ export function fmt(v) {
     return String(rounded);
 }
 
-export function getMeasurementHtml(amount, { wholeMlOnly = false } = {}) {
+function getPrecisionDilutionHtml(amount, substance) {
+    const totalHundredths = Math.round(amount * 100);
+    const remainderHundredths = totalHundredths % 10;
+    if (remainderHundredths === 0) return '';
+
+    const remainder = remainderHundredths / 100;
+    const denominator = 100;
+    let divisor = remainderHundredths;
+    let other = denominator;
+    while (other !== 0) {
+        [divisor, other] = [other, divisor % other];
+    }
+
+    const solutionVolume = denominator / divisor;
+    const reagentVolume = remainderHundredths / divisor;
+    const waterVolume = solutionVolume - reagentVolume;
+    const instructions = t('dilution_prepare', {
+        water: waterVolume,
+        reagent: reagentVolume,
+        substance
+    });
+
+    return `<details class="precision-dilution"><summary>${t('dilution_title', {amount: fmt(remainder)})}</summary><div class="precision-dilution-content">${t('dilution_intro', {instructions})}</div></details>`;
+}
+
+export function getMeasurementHtml(amount, {
+    wholeMlOnly = false,
+    precisionLabel,
+    showDilutionGuide = true
+} = {}) {
     if (!amount || amount <= 0) return '';
+    const amountHundredths = Math.round(amount * 100);
     let rem = wholeMlOnly
         ? Math.ceil(amount - 1e-9)
-        : Math.round(amount * 10) / 10;
+        : precisionLabel
+            ? Math.floor(amountHundredths / 10) / 10
+            : Math.round(amount * 10) / 10;
     let integerPart = Math.floor(rem);
     const fractionalPart = Math.round((rem - integerPart) * 10) / 10;
     const flasks = [];
@@ -68,8 +100,11 @@ export function getMeasurementHtml(amount, { wholeMlOnly = false } = {}) {
         res += `<span style="color:#a0d6a0">${t('pills')}</span> <span style="color:#f0b36a">${pills.join(' + ')}</span>`;
     }
     
-    if (!res) return '';
-    return `<span class="pill-text">${res}</span>`;
+    const measurement = res ? `<span class="pill-text">${res}</span>` : '';
+    const dilution = precisionLabel && showDilutionGuide
+        ? getPrecisionDilutionHtml(amount, precisionLabel)
+        : '';
+    return measurement + dilution;
 }
 
 export function getGrade(p) {

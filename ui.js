@@ -1,4 +1,5 @@
 import { t } from './utils.js';
+import { BLENDER_LOSS, FINISHER_IMP, HEATER_SETTINGS } from './constants.js';
 
 export const elements = {
     recipeSel: document.getElementById('recipe'),
@@ -32,15 +33,43 @@ export const elements = {
 export function renderMods(r) {
     elements.modgrid.innerHTML = '';
     const devs = [
-        { k: 'blender', l: t('module_blender'), h: '−35%→0%' },
-        { k: 'heater', l: t('module_heater'), h: `99°C→${t('manual')}` },
-        { k: 'packer', l: t('module_packer'), h: '+12%→0%' }
+        { k: 'blender', l: t('module_blender') },
+        { k: 'heater', l: t('module_heater') },
+        { k: 'packer', l: t('module_packer') }
     ];
     devs.forEach(d => {
         if (d.k === 'blender' && !r.isBlendable) return;
         const c = document.createElement('div'); c.className = 'modcard';
-        c.innerHTML = `<h4>${d.l}</h4><input type="number" min="0" max="4" step="1" value="0" id="mod_${d.k}"><div class="hint">${d.h}</div>`;
+        c.innerHTML = `<h4>${d.l}</h4><input type="number" min="0" max="4" step="1" value="0" id="mod_${d.k}"><div class="hint" id="mod_status_${d.k}"></div>`;
         elements.modgrid.appendChild(c);
+    });
+}
+
+export function updateModuleStatuses(blenderModules, heaterModules, packerModules) {
+    const statuses = [
+        {
+            id: 'blender',
+            text: `${BLENDER_LOSS[blenderModules] * 100}% ${t('module_blender_loss')}`,
+            isGood: BLENDER_LOSS[blenderModules] === 0
+        },
+        {
+            id: 'heater',
+            text: `${t(HEATER_SETTINGS[heaterModules])}${heaterModules === 1 ? ` · ${t('module_heater_manual_control')}` : ''}`,
+            isGood: heaterModules >= 1
+        },
+        {
+            id: 'packer',
+            text: `${FINISHER_IMP[packerModules] * 100}% ${t('module_packer_contamination')}`,
+            isGood: FINISHER_IMP[packerModules] === 0
+        }
+    ];
+
+    statuses.forEach(({ id, text, isGood }) => {
+        const status = document.getElementById(`mod_status_${id}`);
+        if (!status) return;
+        status.textContent = text;
+        status.classList.toggle('hint-good', isGood);
+        status.classList.toggle('hint-bad', !isGood);
     });
 }
 
@@ -149,11 +178,11 @@ export function removePortionRow(index) {
 export function renderStepsLayout(id) {
     let html = '';
     const purityBlock = `
-        <div class="line" style="margin-top:6px;border-top:1px solid #25323e;padding-top:6px">
-            <span>${t('purity_after_evap')}</span>
-            <span class="amt">
+        <div class="line purity-line">
+            <span class="purity-label">${t('purity_after_evap')}</span>
+            <span class="purity-value">
                 <input type="number" id="purityInputValue" class="purity-input" value="100" min="1" max="100" step="any">
-                <span style="color:#7bc8f2;font-weight:700">%</span>
+                <span>%</span>
             </span>
         </div>
         <div class="line">
