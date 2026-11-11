@@ -18,7 +18,7 @@ function getCartelRequirements(weekValue) {
 
 function getCartelMixPlan(requiredVials, targetPurity, extractPurity, extractAvailable, fillerAvailable, vialVolume) {
     if (extractPurity <= 0) {
-        return { deliveredVials: 0, extractUsed: 0, fillerUsed: 0, finalPurity: 0 };
+        return { deliveredVials: 0, extractUsed: 0, fillerUsed: 0, additionalFillerNeeded: 0, finalPurity: 0 };
     }
 
     const achievablePurity = Math.min(targetPurity, extractPurity);
@@ -28,7 +28,7 @@ function getCartelMixPlan(requiredVials, targetPurity, extractPurity, extractAva
     const byTotalMix = Math.floor((extractAvailable + fillerAvailable + 1e-9) / vialVolume);
     const deliveredVials = Math.max(0, Math.min(requiredVials, byExtract, byTotalMix));
     if (deliveredVials === 0) {
-        return { deliveredVials, extractUsed: 0, fillerUsed: 0, finalPurity: 0 };
+        return { deliveredVials, extractUsed: 0, fillerUsed: 0, additionalFillerNeeded: 0, finalPurity: 0 };
     }
 
     const mixVolume = deliveredVials * vialVolume;
@@ -38,18 +38,24 @@ function getCartelMixPlan(requiredVials, targetPurity, extractPurity, extractAva
         Math.max(extractAtTarget, mixVolume - fillerAvailable)
     );
     const fillerUsed = mixVolume - extractUsed;
+    const additionalFillerNeeded = Math.max(0, extractUsed - extractAtTarget);
 
     return {
         deliveredVials,
         extractUsed,
         fillerUsed,
+        additionalFillerNeeded,
         finalPurity: extractPurity * extractUsed / mixVolume
     };
 }
 
 function getCartelFillerStatus(plan, targetPurity, fillerAvailable) {
     if (plan.finalPurity > targetPurity + 1e-7) {
-        return `<span style="color:#f0b36a">${t('cartel_filler_adjusted', {purity: plan.finalPurity.toFixed(1)})}</span>`;
+        return `<span style="color:#f0b36a">${t('cartel_filler_adjusted', {
+            amount: fmt(plan.additionalFillerNeeded),
+            targetPurity,
+            purity: plan.finalPurity.toFixed(1)
+        })}</span>`;
     }
     return `<span style="color:#a0d6a0">${t('cartel_filler_status_ok', {
         amount: fmt(Math.max(0, fillerAvailable - plan.fillerUsed))
