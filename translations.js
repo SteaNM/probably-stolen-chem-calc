@@ -21,7 +21,7 @@ export const TRANSLATIONS = {
         cost_restricted: "Ограниченные хим. припасы (100 кр.)",
         recipe_process: "📋 Рецепт и процесс",
         results: "📊 Результаты",
-        cartel: "👑 Сдача Картеля",
+        cartel: "👑 Картель",
         cartel_filler: "Наполнитель",
         cartel_starch: "Крахмал (мл)",
         cartel_sugar: "Сахар (мл)",
