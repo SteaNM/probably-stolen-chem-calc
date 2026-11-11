@@ -56,7 +56,8 @@ function getPrecisionDilutionHtml(amount, substance) {
 export function getMeasurementHtml(amount, {
     wholeMlOnly = false,
     precisionLabel,
-    showDilutionGuide = true
+    showDilutionGuide = true,
+    showPills = true
 } = {}) {
     if (!amount || amount <= 0) return '';
     const amountHundredths = Math.round(amount * 100);
@@ -69,6 +70,7 @@ export function getMeasurementHtml(amount, {
     const fractionalPart = Math.round((rem - integerPart) * 10) / 10;
     const flasks = [];
     const pipettes = [];
+    let oneMlPipettes = 0;
 
     for (const size of [100, 50, 25]) {
         const count = Math.floor(integerPart / size);
@@ -78,12 +80,15 @@ export function getMeasurementHtml(amount, {
 
     for (const size of [5, 1]) {
         const count = Math.floor(integerPart / size);
-        if (count > 0) pipettes.push(`${count}×${size}${t('label_ml')}`);
+        if (size === 1) oneMlPipettes = count;
+        else if (count > 0) pipettes.push(`${count}×${size}${t('label_ml')}`);
         integerPart %= size;
     }
+    if (!showPills && fractionalPart > 0) oneMlPipettes += 1;
+    if (oneMlPipettes > 0) pipettes.push(`${oneMlPipettes}×1${t('label_ml')}`);
 
     let pills = [];
-    if (!wholeMlOnly) {
+    if (!wholeMlOnly && showPills) {
         let tempFrac = fractionalPart;
         let c06 = Math.floor(tempFrac / 0.6);
         if (c06 > 0) { pills.push(`${c06}×${t('pill_zyanide')}`); tempFrac = Math.round((tempFrac - c06 * 0.6) * 10) / 10; }

@@ -135,7 +135,8 @@ function getPortionData(index, numericValues) {
 function updatePortionedText(id, rows, amountForBatch, {
     wholeMlOnly = false,
     alcoholStrength = 1,
-    precisionLabel
+    precisionLabel,
+    showPills = true
 } = {}) {
     const rowAmounts = rows.map((row, index) => {
         const amount = amountForBatch(row, index);
@@ -148,7 +149,7 @@ function updatePortionedText(id, rows, amountForBatch, {
         const amountText = wholeMlOnly ? String(perBatch) : fmt(perBatch);
         const measurement = wholeMlOnly
             ? getMeasurementHtml(perBatch, { wholeMlOnly: true })
-            : getMeasurementHtml(perBatch, { precisionLabel });
+            : getMeasurementHtml(perBatch, { precisionLabel, showPills });
         const label = wholeMlOnly
             ? t('alcohol_portion_line', {
                 number: index + 1,
@@ -179,7 +180,8 @@ function updatePortionedText(id, rows, amountForBatch, {
         ]
         : [`<div>${t('instruction_total')}: ${fmt(total)} ${t('label_ml')}${getMeasurementHtml(total, {
             precisionLabel,
-            showDilutionGuide: showSummaryDilution
+            showDilutionGuide: showSummaryDilution,
+            showPills
         })}</div>`];
 
     updateText(id, [...rowHtml, ...summary].join(''));
@@ -391,7 +393,9 @@ export function updateAll(event) {
         });
 
         if (id === 'caffeine_pill') {
-            updatePortionedText('amt-fat', batchRows, (row) => row.values.fat * 0.125 / agentPurity);
+            updatePortionedText('amt-fat', batchRows, (row) => row.values.fat * 0.125 / agentPurity, {
+                showPills: false
+            });
         } else if (id === 'nomore_injector') {
             const rawNomoreTotal = batchRows.reduce(
                 (sum, row) => sum + row.values.mush * (1 - lossPct) * 0.5 * row.count,
