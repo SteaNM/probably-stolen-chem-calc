@@ -5,6 +5,10 @@ let currentLang = 'ru';
 export const setLang = (lang) => { currentLang = lang; };
 export const getLang = () => currentLang;
 
+function formatDecimal(value) {
+    return currentLang === 'ru' ? value.replace('.', ',') : value;
+}
+
 export const t = (key, params = {}) => {
     let str = TRANSLATIONS[currentLang][key] || key;
     for (const [k, v] of Object.entries(params)) {
@@ -16,8 +20,12 @@ export const t = (key, params = {}) => {
 export function fmt(v) {
     if (v === 0) return '0';
     const rounded = Number(v.toFixed(2));
-    if (rounded === 0) return '<0.01';
-    return String(rounded);
+    if (rounded === 0) return formatDecimal('<0.01');
+    return formatDecimal(String(rounded));
+}
+
+export function fmtFixed(v, digits) {
+    return formatDecimal(v.toFixed(digits));
 }
 
 function getPrecisionDilutionHtml(amount, substance) {

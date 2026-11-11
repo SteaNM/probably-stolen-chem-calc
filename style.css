@@ -60,6 +60,7 @@ h1 {
 
 .lang-switch {
     width: auto;
+    height: 34px;
     padding: 4px 8px;
     background: #1e2a35;
     border: 1px solid #3b82f6;
@@ -133,6 +134,7 @@ label {
 
 select, input[type=number] {
     width: 100%;
+    height: 38px;
     padding: 8px 10px;
     background: #1e2a35;
     border: 1px solid #2e3f4e;
@@ -169,7 +171,7 @@ select:focus, input:focus {
 }
 
 .modcard h4 { margin: 0 0 4px; font-size: .75rem; color: #cbd8e6; }
-.modcard input { padding: 4px 6px; font-size: .9rem; text-align: center; }
+.modcard input { height: 30px; padding: 4px 6px; font-size: .9rem; text-align: center; }
 .hint { font-size: .65rem; color: #6e8aa5; margin-top: 4px; line-height: 1.2; }
 .hint-good { color: #a0d6a0; }
 .hint-bad { color: #f87171; }
@@ -181,7 +183,7 @@ select:focus, input:focus {
 .scanner-grid.portion-list { display: block; }
 .scanner-card { background: #0d1319; border: 1px solid #25323e; border-radius: 8px; padding: 8px; }
 .scanner-card h4 { margin: 0 0 4px; font-size: .75rem; color: #cbd8e6; }
-.scanner-card input { padding: 4px 6px; font-size: .9rem; }
+.scanner-card input { height: 30px; padding: 4px 6px; font-size: .9rem; }
 .portion-row { background: linear-gradient(145deg, #121c25, #0d1319 72%); border: 1px solid #2a3c4b; border-radius: 10px; padding: 10px; margin-bottom: 9px; box-shadow: inset 0 1px rgba(255, 255, 255, .025); }
 .portion-row-header { display: flex; justify-content: space-between; align-items: center; margin: -1px 0 10px; color: #d7e5f2; font-size: .8rem; }
 .portion-row-header strong { display: flex; align-items: center; gap: 7px; }
@@ -189,7 +191,7 @@ select:focus, input:focus {
 .portion-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .portion-field, .portion-count { display: block; min-width: 0; margin: 0; color: #91a8ba; font-size: .66rem; font-weight: 600; text-transform: none; letter-spacing: 0; }
 .portion-field-label { display: flex; align-items: flex-end; min-height: 2.5em; margin-bottom: 5px; line-height: 1.25; }
-.portion-input-wrap { display: flex; align-items: center; min-width: 0; height: 36px; border: 1px solid #2d414f; border-radius: 7px; background: #17232d; color: #70899b; }
+.portion-input-wrap { display: flex; align-items: center; min-width: 0; height: 38px; border: 1px solid #2d414f; border-radius: 7px; background: #17232d; color: #70899b; }
 .portion-input-wrap:focus-within { border-color: #55b8a5; box-shadow: 0 0 0 2px rgba(85, 184, 165, .16); }
 .portion-input-wrap input { width: 100%; min-width: 0; height: 100%; padding: 5px 8px; background: transparent; border: 0; border-radius: inherit; box-shadow: none; color: #edf6fa; font-size: .9rem; font-variant-numeric: tabular-nums; }
 .portion-input-wrap input:focus { border: 0; box-shadow: none; }
@@ -207,7 +209,7 @@ select:focus, input:focus {
 .cost-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .cost-input { background: #0d1319; border: 1px solid #25323e; border-radius: 8px; padding: 8px; }
 .cost-input label { font-size: .7rem; text-transform: none; letter-spacing: 0; color: #8b9eb0; margin-bottom: 2px; }
-.cost-input input { padding: 4px 6px; font-size: .9rem; }
+.cost-input input { height: 30px; padding: 4px 6px; font-size: .9rem; }
 
 /* ==========================================================================
    7. РЕЦЕПТ И ПРОЦЕСС (ШАГИ)
@@ -313,7 +315,7 @@ input.purity-input {
     width: 64px;
     min-width: 64px;
     flex: 0 0 64px;
-    height: 34px;
+    height: 38px;
     padding: 4px 5px;
     font-size: .95rem;
     background: #141b22;

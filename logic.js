@@ -1,4 +1,4 @@
-import { t, fmt, getMeasurementHtml, getGrade, calcReputation } from './utils.js';
+import { t, fmt, fmtFixed, getMeasurementHtml, getGrade, calcReputation } from './utils.js';
 import {
     RECIPES,
     DIFF_SETTINGS,
@@ -54,7 +54,7 @@ function getCartelFillerStatus(plan, targetPurity, fillerAvailable) {
         return `<span style="color:#f0b36a">${t('cartel_filler_adjusted', {
             amount: fmt(plan.additionalFillerNeeded),
             targetPurity,
-            purity: plan.finalPurity.toFixed(1)
+            purity: fmtFixed(plan.finalPurity, 1)
         })}</span>`;
     }
     return `<span style="color:#a0d6a0">${t('cartel_filler_status_ok', {
@@ -69,10 +69,10 @@ function getCartelReputationHtml(requiredPurity, actualPurity, requiredVials, de
         : result.total > 10 ? '#7bc8f2' : '#a0d6a0';
     const value = result.gameOver
         ? t('cartel_game_over')
-        : `${result.total >= 0 ? '+' : ''}${result.total} ${t('rep_points')}`;
+        : `${result.total >= 0 ? '+' : ''}${fmt(result.total)} ${t('rep_points')}`;
     const detail = t('cartel_rep_breakdown', {
         count: result.count,
-        purity: result.purity
+        purity: fmt(result.purity)
     });
 
     return `<div class="rep-box" style="padding:6px;margin-top:6px"><div style="font-size:.8rem;color:#cbd8e6;font-weight:600">${t('cartel_rep_bonus')} <span style="color:${color}">${value}</span></div><div style="font-size:.7rem;color:#8b9eb0">${detail}</div></div>`;
@@ -84,7 +84,7 @@ function getCartelStipendHtml(reputation) {
 }
 
 function normalizeNumberInput(input) {
-    const fallback = input.id === 'purityInputValue' ? 100 : 0;
+    const fallback = input.id === 'purityInputValue' || input.classList.contains('reagent-purity-input') ? 100 : 0;
     const min = input.min === '' ? -Infinity : Number(input.min);
     const max = input.max === '' ? Number.MAX_SAFE_INTEGER : Number(input.max);
     const step = input.step === '' ? 1 : Number(input.step);
@@ -263,6 +263,10 @@ export function updateAll(event) {
 
     const purityInput = document.getElementById('purityInputValue');
     const basePurity = purityInput ? numericValues.get('purityInputValue') : 100;
+    const acidBasePurity = (numericValues.get('reagentPurity_acidBase') ?? 100) / 100;
+    const neutralizerPurity = (numericValues.get('reagentPurity_base') ?? 100) / 100;
+    const reducingPurity = (numericValues.get('reagentPurity_reducing') ?? 100) / 100;
+    const agentPurity = (numericValues.get('reagentPurity_agent') ?? 100) / 100;
     const totalPaste = inputs.mush || 0;
 
     const extractPurity = basePurity * (1 - FINISHER_IMP[Math.min(fm, 4)]);
@@ -345,13 +349,14 @@ export function updateAll(event) {
             extractForNomore = Math.max(0, dreamExtractTotal - extractForCartel);
             
             const reducing = inputs.reducing;
+            const effectiveReducing = reducing * reducingPurity;
             if (reducing <= 0) {
                 errorMsg = t('error_no_reducing');
                 elements.pipelineBox.innerHTML = `<b>${t('pipe_title')}</b><br>${t('pipe_paste')} <b>${fmt(rawPaste)} ${t('pipe_ml')}</b><br>${t('pipe_blender_lost')} (${bm} ${t('pipe_mod')}) ${t('pipe_loses')} ${(lossPct * 100)}%: <b style="color:#f87171">−${fmt(lostAmount)} ${t('pipe_ml')}</b><br>${t('pipe_left')} <b>${fmt(usablePaste)} ${t('pipe_ml')}</b>${blenderProteinLines}<br>${t('pipe_dream_extract')} <b style="color:#7bc8f2">${fmt(dreamExtractTotal)} ${t('pipe_ml')}</b><br>${t('pipe_left_nomore')} <b style="color:#a0d6a0">${fmt(extractForNomore)} ${t('pipe_ml')}</b>`;
             } else {
-                effectiveExtract = Math.min(extractForNomore, reducing);
-                if (reducing < extractForNomore) {
-                    elements.warnEl.innerHTML = `<div class="warn">${t('warn_lack_reducing')} ${fmt(extractForNomore)} ${t('warn_lack_reducing_2')} ${fmt(extractForNomore)} ${t('warn_lack_reducing_3')} ${fmt(reducing)} ${t('warn_lack_reducing_4')}</div>`;
+                effectiveExtract = Math.min(extractForNomore, effectiveReducing);
+                if (effectiveReducing < extractForNomore) {
+                    elements.warnEl.innerHTML = `<div class="warn">${t('warn_lack_reducing')} ${fmt(extractForNomore)} ${t('warn_lack_reducing_2')} ${fmt(extractForNomore / reducingPurity)} ${t('warn_lack_reducing_3')} ${fmt(reducing)} ${t('warn_lack_reducing_4')}</div>`;
                 } else {
                     elements.warnEl.innerHTML = '';
                 }
@@ -381,12 +386,12 @@ export function updateAll(event) {
         updatePortionedText('amt-alc', batchRows, (row) =>
             row.values.mush * (1 - lossPct) * alcoholRatio / alcPct,
         { wholeMlOnly: true, alcoholStrength: alcPct });
-        updatePortionedText('amt-prot', batchRows, (row) => row.values.protein * (1 - lossPct), {
+        updatePortionedText('amt-prot', batchRows, (row) => row.values.protein * (1 - lossPct) / acidBasePurity, {
             precisionLabel: t('dilution_acid_base')
         });
 
         if (id === 'caffeine_pill') {
-            updatePortionedText('amt-fat', batchRows, (row) => row.values.fat * 0.125);
+            updatePortionedText('amt-fat', batchRows, (row) => row.values.fat * 0.125 / agentPurity);
         } else if (id === 'nomore_injector') {
             const rawNomoreTotal = batchRows.reduce(
                 (sum, row) => sum + row.values.mush * (1 - lossPct) * 0.5 * row.count,
@@ -405,18 +410,24 @@ export function updateAll(event) {
                 return batchAllocation * reductionRatio;
             };
             updatePortionedText('amt-ext', batchRows, actualPerBatch);
-            updatePortionedText('amt-red', batchRows, actualPerBatch, {
+            updatePortionedText('amt-red', batchRows, (row) => actualPerBatch(row) / reducingPurity, {
                 precisionLabel: t('dilution_reducing_agent')
             });
-            updatePortionedText('amt-agent', batchRows, (row) => actualPerBatch(row) * 0.333);
+            updatePortionedText('amt-agent', batchRows, (row) => actualPerBatch(row) * 0.333 / agentPurity);
         }
     } else if (id === 'phanta_pill') {
         const stabilizer = inputs.stab || 0;
         const methylolReduction = (inputs.methylol || 0) * 0.75;
-        updateText('amt-stab', `${fmt(stabilizer)} ${t('label_ml')}` + getMeasurementHtml(stabilizer, {
+        const acidBaseAmount = stabilizer / (20 * acidBasePurity);
+        const baseAmount = (numericValues.get('phantaAcidRemainder') || 0) / neutralizerPurity;
+        const reducingAmount = methylolReduction / reducingPurity;
+        updateText('amt-stab', `${fmt(acidBaseAmount)} ${t('label_ml')}` + getMeasurementHtml(acidBaseAmount, {
             precisionLabel: t('dilution_acid_base')
         }));
-        updateText('amt-red', `${fmt(methylolReduction)} ${t('label_ml')}` + getMeasurementHtml(methylolReduction, {
+        updateText('amt-base', `${fmt(baseAmount)} ${t('label_ml')}` + getMeasurementHtml(baseAmount, {
+            precisionLabel: t('dilution_base')
+        }));
+        updateText('amt-red', `${fmt(reducingAmount)} ${t('label_ml')}` + getMeasurementHtml(reducingAmount, {
             precisionLabel: t('dilution_reducing_agent')
         }));
     }
@@ -437,7 +448,7 @@ export function updateAll(event) {
         return;
     }
 
-    updateText('purityGradeText', `<span style="color:${g.c}">${purePurity.toFixed(1)}% — ${g.n}</span>`);
+    updateText('purityGradeText', `<span style="color:${g.c}">${fmtFixed(purePurity, 1)}% — ${g.n}</span>`);
     
     const totalItems = Math.floor(totalExtract / r.outputMl + 1e-9);
     const leftoverPure = Math.max(0, totalExtract - (totalItems * r.outputMl));
@@ -461,7 +472,7 @@ export function updateAll(event) {
         const base = r.baseValue;
         const qualityBonus = base * g.m;
         const qualityPercentText = `${g.m >= 0 ? '+' : ''}${(g.m * 100).toFixed(0)}%`;
-        const qualityBonusText = `${qualityBonus >= 0 ? '+' : '−'}${Math.abs(qualityBonus).toFixed(1)}`;
+        const qualityBonusText = `${qualityBonus >= 0 ? '+' : '−'}${fmtFixed(Math.abs(qualityBonus), 1)}`;
         const afterQuality = base + qualityBonus;
         const contrabandBonus = afterQuality * r.contrabandMarkup;
         const marketMarkup = diffConfig.markup - 1;
@@ -476,20 +487,20 @@ export function updateAll(event) {
                 <div style="font-size:.85rem;color:#cbd8e6;font-weight:600;margin-bottom:6px">${t('price_per_item')}</div>
                 <div class="sale-line"><span>${t('base_price')}</span><span>${base} ${t('currency')}</span></div>
                 <div class="sale-line"><span>${t('quality_bonus')} (${qualityPercentText})</span><span style="color:${qualityBonus >= 0 ? '#7bc8f2' : '#f87171'}">${qualityBonusText} ${t('currency')}</span></div>
-                ${r.contrabandMarkup > 0 ? `<div class="sale-line"><span>${t('contraband_bonus')} (+${(r.contrabandMarkup * 100).toFixed(0)}%)</span><span style="color:#f0b36a">+${contrabandBonus.toFixed(1)} ${t('currency')}</span></div>` : ''}
-                ${diffConfig.markup > 1 ? `<div class="sale-line"><span>${t('difficulty_bonus')} (${t('times')}${diffConfig.markup})</span><span style="color:#a0d6a0">+${diffBonus.toFixed(1)} ${t('currency')}</span></div>` : ''}
+                ${r.contrabandMarkup > 0 ? `<div class="sale-line"><span>${t('contraband_bonus')} (+${(r.contrabandMarkup * 100).toFixed(0)}%)</span><span style="color:#f0b36a">+${fmtFixed(contrabandBonus, 1)} ${t('currency')}</span></div>` : ''}
+                ${diffConfig.markup > 1 ? `<div class="sale-line"><span>${t('difficulty_bonus')} (${t('times')}${fmt(diffConfig.markup)})</span><span style="color:#a0d6a0">+${fmtFixed(diffBonus, 1)} ${t('currency')}</span></div>` : ''}
                 <div class="sale-total"><span>${t('total_price')}</span><span>${t('approx')}${pricePerItem} ${t('currency')}</span></div>
                 <div class="sale-line" style="margin-top:4px;font-size:.9rem;color:#e8edf2;font-weight:600"><span>${t('revenue_text', {amount: totalItems})}</span><span style="color:#a0d6a0">${t('approx')}${totalRevenue} ${t('currency')}</span></div>
             </div>
             <div class="cost-box" style="margin-bottom:8px">
                 <div style="font-size:.85rem;color:#cbd8e6;font-weight:600;margin-bottom:4px">${t('costs_breakdown')}</div>
-                ${id !== 'phanta_pill' ? `<div class="cost-line"><span>${sourceCostLabel}</span><span class="amt" style="color:${actualMushCost > 0 ? '#f87171' : '#a0d6a0'}">${actualMushCost > 0 ? `−${actualMushCost.toFixed(1)} ${t('currency')}` : `0 ${t('currency')}`}</span></div>` : ''}
-                <div class="cost-line"><span>${t('cost_chem_packs')} (${chemCountUsed} ${t('unit_pcs')})</span><span class="amt" style="color:${actualChemCost > 0 ? '#f87171' : '#a0d6a0'}">${actualChemCost > 0 ? `−${actualChemCost.toFixed(1)} ${t('currency')}` : `0 ${t('currency')}`}</span></div>
-                <div class="cost-line"><span>${t('cost_restricted_packs')} (${restrictedCountUsed} ${t('unit_pcs')})</span><span class="amt" style="color:${actualRestrictedCost > 0 ? '#f87171' : '#a0d6a0'}">${actualRestrictedCost > 0 ? `−${actualRestrictedCost.toFixed(1)} ${t('currency')}` : `0 ${t('currency')}`}</span></div>
-                <div class="cost-line" style="border-top:1px solid #25323e;padding-top:4px;margin-top:4px"><span><b>${t('total_costs')}</b></span><span class="amt" style="color:#f87171">−${totalCost.toFixed(1)} ${t('currency')}</span></div>
+                ${id !== 'phanta_pill' ? `<div class="cost-line"><span>${sourceCostLabel}</span><span class="amt" style="color:${actualMushCost > 0 ? '#f87171' : '#a0d6a0'}">${actualMushCost > 0 ? `−${fmtFixed(actualMushCost, 1)} ${t('currency')}` : `0 ${t('currency')}`}</span></div>` : ''}
+                <div class="cost-line"><span>${t('cost_chem_packs')} (${chemCountUsed} ${t('unit_pcs')})</span><span class="amt" style="color:${actualChemCost > 0 ? '#f87171' : '#a0d6a0'}">${actualChemCost > 0 ? `−${fmtFixed(actualChemCost, 1)} ${t('currency')}` : `0 ${t('currency')}`}</span></div>
+                <div class="cost-line"><span>${t('cost_restricted_packs')} (${restrictedCountUsed} ${t('unit_pcs')})</span><span class="amt" style="color:${actualRestrictedCost > 0 ? '#f87171' : '#a0d6a0'}">${actualRestrictedCost > 0 ? `−${fmtFixed(actualRestrictedCost, 1)} ${t('currency')}` : `0 ${t('currency')}`}</span></div>
+                <div class="cost-line" style="border-top:1px solid #25323e;padding-top:4px;margin-top:4px"><span><b>${t('total_costs')}</b></span><span class="amt" style="color:#f87171">−${fmtFixed(totalCost, 1)} ${t('currency')}</span></div>
             </div>
             <div class="profit-box">
-                <div class="profit-line" style="font-size:.9rem;font-weight:600;color:#e8edf2"><span>${t('profit')}</span><span class="amt" style="color:${netProfit >= 0 ? '#a0d6a0' : '#f87171'}">${t('approx')}${netProfit.toFixed(1)} ${t('currency')}</span></div>
+                <div class="profit-line" style="font-size:.9rem;font-weight:600;color:#e8edf2"><span>${t('profit')}</span><span class="amt" style="color:${netProfit >= 0 ? '#a0d6a0' : '#f87171'}">${t('approx')}${fmtFixed(netProfit, 1)} ${t('currency')}</span></div>
             </div>
         `;
     }
@@ -547,8 +558,8 @@ export function updateAll(event) {
                             <div style="font-size:.8rem;color:#f0b36a;font-weight:600;margin-bottom:2px">${t('cartel_for_cartel')}</div>
                             <div class="line" style="padding:0"><span>${t('cartel_extract')}</span><span class="amt" style="color:#a0d6a0">${t('cartel_extract_amount_text', {amount: fmt(plan.extractUsed)})}</span></div>
                             <div class="line" style="padding:0"><span>${t('cartel_filler_amount')}</span><span class="amt" style="color:#f0b36a">${t('cartel_extract_amount_text', {amount: fmt(plan.fillerUsed)})}</span></div>
-                            <div class="line" style="padding:0;margin-top:4px;border-top:1px solid #25323e;padding-top:4px"><span>${t('cartel_mix_purity')}</span><span class="amt" style="color:#7bc8f2">${mixPurity.toFixed(1)}%</span></div>
-                            <div class="line" style="padding:0"><span>${t('cartel_final_purity')}</span><span class="amt" style="color:#a0d6a0">${plan.finalPurity.toFixed(1)}%</span></div>
+                            <div class="line" style="padding:0;margin-top:4px;border-top:1px solid #25323e;padding-top:4px"><span>${t('cartel_mix_purity')}</span><span class="amt" style="color:#7bc8f2">${fmtFixed(mixPurity, 1)}%</span></div>
+                            <div class="line" style="padding:0"><span>${t('cartel_final_purity')}</span><span class="amt" style="color:#a0d6a0">${fmtFixed(plan.finalPurity, 1)}%</span></div>
                             <div style="font-size:.75rem;margin-top:4px">${fillerStatus}</div>
                         </div>
                         ${getCartelStipendHtml(reputation)}
@@ -572,7 +583,7 @@ export function updateAll(event) {
                     2
                 );
                 const extractForNomoreVal = dreamExtractTotal - extractForCartel;
-                const convertedExtract = Math.min(extractForNomoreVal, inputs.reducing);
+                const convertedExtract = Math.min(extractForNomoreVal, effectiveExtract);
                 const pureNomoreVolume = convertedExtract * 0.6;
                 const saleItems = Math.floor(pureNomoreVolume / r.outputMl);
                 const mixPurity = plan.finalPurity / (1 - FINISHER_IMP[Math.min(fm, 4)]);
@@ -597,8 +608,8 @@ export function updateAll(event) {
                         <div style="font-size:.8rem;color:#f0b36a;font-weight:600;margin-bottom:2px">${t('cartel_for_cartel')}</div>
                         <div class="line" style="padding:0"><span>${t('cartel_raw_extract')}</span><span class="amt" style="color:#a0d6a0">${t('cartel_extract_amount_text', {amount: fmt(plan.extractUsed)})}</span></div>
                         <div class="line" style="padding:0"><span>${t('cartel_filler_amount')}</span><span class="amt" style="color:#f0b36a">${t('cartel_extract_amount_text', {amount: fmt(plan.fillerUsed)})}</span></div>
-                        <div class="line" style="padding:0;margin-top:4px;border-top:1px solid #25323e;padding-top:4px"><span>${t('cartel_mix_purity')}</span><span class="amt" style="color:#7bc8f2">${mixPurity.toFixed(1)}%</span></div>
-                        <div class="line" style="padding:0"><span>${t('cartel_final_purity')}</span><span class="amt" style="color:#a0d6a0">${plan.finalPurity.toFixed(1)}%</span></div>
+                        <div class="line" style="padding:0;margin-top:4px;border-top:1px solid #25323e;padding-top:4px"><span>${t('cartel_mix_purity')}</span><span class="amt" style="color:#7bc8f2">${fmtFixed(mixPurity, 1)}%</span></div>
+                        <div class="line" style="padding:0"><span>${t('cartel_final_purity')}</span><span class="amt" style="color:#a0d6a0">${fmtFixed(plan.finalPurity, 1)}%</span></div>
                         <div style="font-size:.75rem;margin-top:4px">${fillerStatus}</div>
                     </div>
                     ${getCartelStipendHtml(reputation)}
