@@ -118,7 +118,8 @@ export function getGrade(p) {
 }
 
 export function calcReputation(targetPurity, actualPurity, requiredCount, deliveredCount) {
-    if (deliveredCount <= 0 || actualPurity <= targetPurity / 4) {
+    const normalizedPurity = Number(actualPurity.toFixed(10));
+    if (deliveredCount <= 0 || normalizedPurity <= targetPurity / 4) {
         return { gameOver: true, count: 0, purity: 0, total: 0 };
     }
 
@@ -127,9 +128,10 @@ export function calcReputation(targetPurity, actualPurity, requiredCount, delive
         : deliveredCount;
     let purity = 0;
 
-    if (actualPurity < targetPurity) purity = -(targetPurity - actualPurity);
-    else if (actualPurity <= targetPurity + 10) purity = actualPurity - targetPurity;
-    else purity = 10 + Math.floor((actualPurity - targetPurity - 10) / 4);
+    if (normalizedPurity < targetPurity) purity = -(targetPurity - normalizedPurity);
+    else if (normalizedPurity <= targetPurity + 10) purity = normalizedPurity - targetPurity;
+    else purity = 10 + Math.floor((normalizedPurity - targetPurity - 10) / 4);
+    purity = Number(purity.toFixed(10));
 
-    return { gameOver: false, count, purity, total: count + purity };
+    return { gameOver: false, count, purity, total: Number((count + purity).toFixed(10)) };
 }
