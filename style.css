@@ -7,16 +7,14 @@
 }
 
 body {
+    --page-gutter: clamp(6px, .65vw, 12px);
     background: #0b0f14;
     color: #e8edf2;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
     margin: 0;
-    padding: clamp(6px, .65vw, 12px);
-    overflow: hidden;
+    padding: var(--page-gutter);
+    overflow-x: clip;
 }
 
 /* ==========================================================================
@@ -28,8 +26,9 @@ body {
     padding: clamp(10px, .85vw, 16px) clamp(12px, 1vw, 20px);
     width: 100%;
     max-width: 1920px;
-    height: 100%;
-    min-height: 0;
+    min-height: calc(100vh - var(--page-gutter) - var(--page-gutter));
+    min-height: calc(100dvh - var(--page-gutter) - var(--page-gutter));
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
     box-shadow: 0 10px 30px rgba(0, 0, 0, .6), 0 0 0 1px #2a3540;
@@ -77,15 +76,14 @@ h1 {
    ========================================================================== */
 .grid-container {
     display: grid;
-    grid-template-columns: minmax(240px, 300px) minmax(0, 1fr) minmax(280px, 340px) minmax(280px, 340px);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: clamp(8px, .85vw, 16px);
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
+    flex: 1 0 auto;
+    min-height: auto;
 }
 
 .grid-container.no-cartel {
-    grid-template-columns: minmax(240px, 300px) minmax(0, 1fr) minmax(280px, 340px);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .col {
@@ -93,15 +91,9 @@ h1 {
     flex-direction: column;
     gap: clamp(8px, .65vw, 12px);
     min-width: 0;
-    min-height: 0;
-    overflow-y: auto;
+    min-height: auto;
     padding-right: 4px;
 }
-
-/* Скроллбар */
-.col::-webkit-scrollbar { width: 6px; }
-.col::-webkit-scrollbar-track { background: #0b0f14; }
-.col::-webkit-scrollbar-thumb { background: #2e3f4e; border-radius: 3px; }
 
 /* ==========================================================================
    4. ПАНЕЛИ И ФОРМЫ (ИНПУТЫ)
@@ -157,7 +149,7 @@ select:focus, input:focus {
    ========================================================================== */
 .modgrid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 110px), 1fr));
     gap: 8px;
     margin-bottom: 12px;
 }
@@ -179,7 +171,7 @@ select:focus, input:focus {
 /* ==========================================================================
    6. СКАНЕР И ЗАТРАТЫ
    ========================================================================== */
-.scanner-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.scanner-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 8px; }
 .scanner-grid.portion-list { display: block; }
 .scanner-card { background: #0d1319; border: 1px solid #25323e; border-radius: 8px; padding: 8px; }
 .scanner-card h4 { margin: 0 0 4px; font-size: .75rem; color: #cbd8e6; }
@@ -238,8 +230,8 @@ select:focus, input:focus {
 
 .stitle { font-weight: 700; color: #7bc8f2; font-size: .85rem; margin-bottom: 4px; }
 .desc { font-size: .8rem; color: #a0b4c8; margin-bottom: 6px; line-height: 1.4; }
-.line { display: flex; justify-content: space-between; align-items: flex-start; padding: 2px 0 2px 8px; font-size: .85rem; }
-.amt { font-weight: 700; color: #7bc8f2; font-variant-numeric: tabular-nums; text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
+.line { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 4px 8px; padding: 2px 0 2px 8px; font-size: .85rem; }
+.amt { min-width: 0; max-width: 100%; font-weight: 700; color: #7bc8f2; font-variant-numeric: tabular-nums; text-align: right; display: flex; flex-direction: column; align-items: flex-end; overflow-wrap: anywhere; }
 .note { font-size: .7rem; color: #6e8aa5; margin-left: 6px; }
 
 /* Плашка для колб и пилюль */
@@ -359,45 +351,21 @@ input.purity-input {
 /* ==========================================================================
    10. АДАПТИВНОСТЬ (МЕДИА-ЗАПРОСЫ)
    ========================================================================== */
-@media (max-width: 1600px) {
-    .grid-container { grid-template-columns: 300px 1fr 340px; }
-    .grid-container.no-cartel { grid-template-columns: 300px 1fr 340px; }
-    .grid-container:not(.no-cartel) #col-cartel { grid-column: 3; grid-row: 2; }
-}
-
 @media (max-width: 1200px) {
-    body {
-        height: auto;
-        min-height: 100vh;
-        min-height: 100dvh;
-        overflow: auto;
-    }
-
-    .calc {
-        height: auto;
-        min-height: calc(100vh - 12px);
-        min-height: calc(100dvh - 12px);
-    }
-
     .grid-container,
     .grid-container.no-cartel {
-        grid-template-columns: minmax(220px, .8fr) minmax(0, 1.5fr);
-        overflow: visible;
-    }
-
-    .grid-container:not(.no-cartel) #col-cartel {
-        grid-column: 1 / -1;
-        grid-row: auto;
-    }
-
-    .col {
-        overflow: visible;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 720px) {
     .calc {
         padding: 10px;
+    }
+
+    .grid-container,
+    .grid-container.no-cartel {
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .header > div {
@@ -409,26 +377,20 @@ input.purity-input {
         padding-left: 8px;
     }
 
-    .grid-container,
-    .grid-container.no-cartel {
+    .portion-fields {
         grid-template-columns: minmax(0, 1fr);
-    }
-
-    .grid-container:not(.no-cartel) #col-cartel {
-        grid-column: auto;
     }
 }
 
 @media (min-width: 2200px) {
     .calc {
-        max-width: none;
+        max-width: 2560px;
     }
+}
 
-    .grid-container {
-        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.8fr) minmax(0, 1.1fr) minmax(0, 1.1fr);
-    }
-
-    .grid-container.no-cartel {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+@media (min-width: 2200px) and (min-height: 1000px) {
+    .calc {
+        padding-top: 12px;
+        padding-bottom: 12px;
     }
 }
