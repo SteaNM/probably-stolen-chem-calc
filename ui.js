@@ -196,7 +196,7 @@ export function renderStepsLayout(id) {
     const purityLabel = id === 'birth_control_pill'
         ? t('purity_before_packer')
         : t('purity_after_evap');
-    const purityBlock = `
+    const purityInputBlock = `
         ${id === 'birth_control_pill' ? `
         <div class="line purity-line">
             <label class="purity-label" for="scan_birth_control_filtered_volume">${t('input_birth_control_filtered_volume')}</label>
@@ -211,11 +211,13 @@ export function renderStepsLayout(id) {
                 <input type="number" id="purityInputValue" class="purity-input" value="100" min="${id === 'birth_control_pill' ? '0' : '1'}" max="100" step="any">
                 <span>%</span>
             </span>
-        </div>
+        </div>`;
+    const purityGradeBlock = `
         <div class="line">
             <span>${t('purity_after_packer')}</span>
             <span class="amt" id="purityGradeText" style="color:#a0d6a0">100.0%</span>
         </div>`;
+    const purityBlock = `${purityInputBlock}${purityGradeBlock}`;
 
     if (id === 'dream_dust' || id === 'nightmare_dust') {
         const descEvap = id === 'nightmare_dust' ? t('desc_evap_nightmare') : t('desc_evap_dream');
@@ -245,13 +247,12 @@ export function renderStepsLayout(id) {
             <div class="step"><div class="stitle">${t('step_evap_pack_phanta')}</div><div class="desc">${t('desc_evap_phanta')}</div>${purityBlock}</div>`;
     } else if (id === 'nomore_injector') {
         html = `
-            <div class="step"><div class="stitle">${t('step_extract_nomore')}</div><div class="desc">${t('desc_extract_nomore')}</div><div class="line"><span id="label-alcohol">${t('label_alcohol')}</span><span class="amt" id="amt-alc"></span></div><div class="line"><span>${t('label_acid_base')}</span><span class="amt" id="amt-prot"></span></div>${renderReagentPurityInput('acidBase', 'reagent_purity_acid_base')}</div>
-            <div class="step"><div class="stitle">${t('step_evap_nomore')}</div><div class="desc">${t('desc_evap_nomore')}</div>${purityBlock}</div>
-            <div class="step"><div class="stitle">${t('step_reducing_nomore')}</div><div class="desc">${t('desc_mix_nomore')}</div><div class="line"><span>${t('label_extract')}</span><span class="amt" id="amt-ext"></span></div><div class="line"><span>${t('label_reducing')}</span><span class="amt" id="amt-red"></span></div>${renderReagentPurityInput('reducing', 'reagent_purity_reducing')}</div>
-            <div class="step"><div class="stitle">${t('step_agent_nomore')}</div><div class="desc">${t('desc_agent_nomore')}</div><div class="line"><span>${t('label_agent')}</span><span class="amt" id="amt-agent"></span></div>${renderReagentPurityInput('agent', 'reagent_purity_agent')}</div>
-            <div class="step"><div class="stitle">${t('step_reaction_nomore')}</div><div class="desc">${t('desc_react_nomore')}</div></div>
-            <div class="step"><div class="stitle">${t('step_filter_nomore')}</div><div class="desc">${t('desc_filter_nomore')}</div></div>
-            <div class="step"><div class="stitle">${t('step_finish_nomore')}</div><div class="desc">${t('desc_finish_nomore')}</div></div>`;
+            <div class="step"><div class="stitle">${t('step_prepare_nomore')}</div><div class="desc">${t('desc_prepare_nomore')}</div></div>
+            <div class="step"><div class="stitle">${t('step_extract_nomore')}</div><div class="desc">${t('desc_extract_nomore')}</div><div class="line"><span id="label-alcohol">${t('label_alcohol')}</span><span class="amt" id="amt-alc"></span></div></div>
+            <div class="step"><div class="stitle">${t('step_clean_nomore')}</div><div class="desc">${t('desc_cleaning')}</div><div class="line"><span>${t('label_acid_base')}</span><span class="amt" id="amt-prot"></span></div>${renderReagentPurityInput('acidBase', 'reagent_purity_acid_base')}</div>
+            <div class="step"><div class="stitle">${t('step_evap_nomore')}</div><div class="desc">${t('desc_evap_nomore')}</div>${purityInputBlock}</div>
+            <div class="step"><div class="stitle">${t('step_reaction_nomore')}</div><div class="desc">${t('desc_reaction_nomore')}</div><div class="line"><span>${t('label_reducing')}</span><span class="amt" id="amt-red"></span></div>${renderReagentPurityInput('reducing', 'reagent_purity_reducing')}<div class="line"><span>${t('label_agent')}</span><span class="amt" id="amt-agent"></span></div>${renderReagentPurityInput('agent', 'reagent_purity_agent')}</div>
+            <div class="step"><div class="stitle">${t('step_pack_nomore')}</div><div class="desc">${t('desc_pack_nomore')}</div>${purityGradeBlock}</div>`;
     } else if (id === 'birth_control_pill') {
         html = `
             <div class="step"><div class="stitle">${t('step_birth_control_blend')}</div><div class="desc">${t('desc_birth_control_blend')}</div></div>

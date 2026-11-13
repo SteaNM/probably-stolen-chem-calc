@@ -24,6 +24,13 @@ export function fmt(v) {
     return formatDecimal(String(rounded));
 }
 
+export function fmtPrecision(v, digits) {
+    if (v === 0) return '0';
+    const rounded = Number(v.toFixed(digits));
+    if (rounded === 0) return formatDecimal(`<${(1 / (10 ** digits)).toFixed(digits)}`);
+    return formatDecimal(String(rounded));
+}
+
 export function fmtFixed(v, digits) {
     return formatDecimal(v.toFixed(digits));
 }
